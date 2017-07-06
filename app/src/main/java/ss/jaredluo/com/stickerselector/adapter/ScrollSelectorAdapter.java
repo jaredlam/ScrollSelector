@@ -15,14 +15,14 @@ import ss.jaredluo.com.stickerselector.view.PlaceholderView;
  * Created by admin on 2017/7/4.
  */
 
-public abstract class RoundSelectorAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int ITEM_TYPE_DATA = 0x10;
     private static final int ITEM_TYPE_PLACE_HOLDER = 0x11;
 
     private final List<T> mData;
 
-    public RoundSelectorAdapter(List<T> data) {
+    public ScrollSelectorAdapter(List<T> data) {
         mData = data;
     }
 
@@ -37,8 +37,8 @@ public abstract class RoundSelectorAdapter<T, VH extends RecyclerView.ViewHolder
             view.setLayoutParams(new ViewGroup.LayoutParams(width / 2 + dataItemWidth / 2, 1));
             return new ViewHolderPlaceHolder(view);
         } else {
-            dataView.setScaleX(SelectorLayoutManager.INIT_SCALE);
-            dataView.setScaleY(SelectorLayoutManager.INIT_SCALE);
+            dataView.setScaleX(SelectorLayoutManager.getInitScale());
+            dataView.setScaleY(SelectorLayoutManager.getInitScale());
             return createViewHolder(dataView);
         }
 

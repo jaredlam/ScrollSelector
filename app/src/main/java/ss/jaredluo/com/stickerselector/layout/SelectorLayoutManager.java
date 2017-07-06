@@ -20,8 +20,7 @@ import ss.jaredluo.com.stickerselector.view.PlaceholderView;
 
 public class SelectorLayoutManager extends LinearLayoutManager {
 
-    private static final float MAX_SCALE_DIFF = 0.4f;
-    public static final float INIT_SCALE = 0.6f;
+    private static float mInitScale = 0.6f;
 
     private Point recyclerCenter = new Point();
     private int mChildHalfWidth;
@@ -40,6 +39,14 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     public SelectorLayoutManager(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         this.mContext = context;
+    }
+
+    public static float getInitScale() {
+        return mInitScale;
+    }
+
+    public static void setInitScale(float initScale) {
+        mInitScale = initScale;
     }
 
     @Override
@@ -92,11 +99,11 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             if (!(child instanceof PlaceholderView)) {
                 float absDistance = Math.abs(getCenterRelativePositionOf(child));
 
-                float scale = INIT_SCALE;
+                float scale = mInitScale;
                 float centerWidth = mChildHalfWidth * 2;
                 if (absDistance <= centerWidth) {
                     float closeFactorToCenter = 1 - absDistance / centerWidth;
-                    scale += MAX_SCALE_DIFF * closeFactorToCenter;
+                    scale += (1 - mInitScale) * closeFactorToCenter;
                 }
 
                 child.setScaleX(scale);

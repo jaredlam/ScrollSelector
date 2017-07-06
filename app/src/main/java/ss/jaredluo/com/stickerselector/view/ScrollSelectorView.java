@@ -11,20 +11,20 @@ import ss.jaredluo.com.stickerselector.decoration.HorizontalSpaceItemDecoration;
  * Created by admin on 2017/7/4.
  */
 
-public class RoundSelectorView extends RecyclerView {
+public class ScrollSelectorView extends RecyclerView {
 
 
-    public RoundSelectorView(Context context) {
+    public ScrollSelectorView(Context context) {
         super(context);
         initSpaceDecoration();
     }
 
-    public RoundSelectorView(Context context, @Nullable AttributeSet attrs) {
+    public ScrollSelectorView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         initSpaceDecoration();
     }
 
-    public RoundSelectorView(Context context, @Nullable AttributeSet attrs, int defStyle) {
+    public ScrollSelectorView(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         initSpaceDecoration();
     }

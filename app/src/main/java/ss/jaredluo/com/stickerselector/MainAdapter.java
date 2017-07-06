@@ -6,13 +6,13 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import ss.jaredluo.com.stickerselector.adapter.RoundSelectorAdapter;
+import ss.jaredluo.com.stickerselector.adapter.ScrollSelectorAdapter;
 
 /**
  * Created by admin on 2017/7/6.
  */
 
-public class MainAdapter extends RoundSelectorAdapter<String, MainAdapter.ViewHolderData> {
+public class MainAdapter extends ScrollSelectorAdapter<String, MainAdapter.ViewHolderData> {
 
     public MainAdapter(List<String> data) {
         super(data);

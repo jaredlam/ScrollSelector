@@ -5,7 +5,7 @@
     android:background="@android:color/black"
     android:orientation="vertical">
 
-    <ss.jaredluo.com.stickerselector.view.RoundSelectorView
+    <ss.jaredluo.com.stickerselector.view.ScrollSelectorView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
