@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < 5; i++) {
             data.add(i + "");
         }
-        mAdapter = new RoundSelectorAdapter(data);
+        mAdapter = new MainAdapter(data);
         mRecyclerView.setAdapter(mAdapter);
     }
 }

@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 
 import ss.jaredluo.com.stickerselector.model.Nearest;
+import ss.jaredluo.com.stickerselector.view.PlaceholderView;
 
 /**
  * Created by admin on 2017/7/6.
@@ -49,11 +50,10 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         applyItemTransformToChildren();
     }
 
+
     private void initChildSize(RecyclerView.Recycler recycler) {
         View child = recycler.getViewForPosition(1);
-        addView(child);
         measureChildWithMargins(child, 0, 0);
-
         mChildHalfWidth = getDecoratedMeasuredWidth(child) / 2;
     }
 
@@ -62,9 +62,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     private float getCenterRelativePositionOf(View v) {
-        float distanceFromCenter = getDecoratedLeft(v) + mChildHalfWidth - recyclerCenter.x;
-
-        return distanceFromCenter;
+        return getDecoratedLeft(v) + mChildHalfWidth - recyclerCenter.x;
     }
 
     @Override
@@ -90,31 +88,27 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     private void applyItemTransformToChildren() {
         for (int i = 0; i < getChildCount(); i++) {
-            if (i == 0 || i == getChildCount() - 1) {
-                continue;
-            }
             View child = getChildAt(i);
-            float absDistance = Math.abs(getCenterRelativePositionOf(child));
+            if (!(child instanceof PlaceholderView)) {
+                float absDistance = Math.abs(getCenterRelativePositionOf(child));
 
-            float scale = INIT_SCALE;
-            float centerWidth = mChildHalfWidth * 2;
-            if (absDistance <= centerWidth) {
-                float closeFactorToCenter = 1 - absDistance / centerWidth;
-                scale += MAX_SCALE_DIFF * closeFactorToCenter;
-                if (i == 2 && scale < 1) {
-                    Log.i("Jared", "scale: " + scale);
-                    Log.i("Jared", "closeFactorToCenter: " + closeFactorToCenter);
+                float scale = INIT_SCALE;
+                float centerWidth = mChildHalfWidth * 2;
+                if (absDistance <= centerWidth) {
+                    float closeFactorToCenter = 1 - absDistance / centerWidth;
+                    scale += MAX_SCALE_DIFF * closeFactorToCenter;
                 }
-            }
 
-            child.setScaleX(scale);
-            child.setScaleY(scale);
+                child.setScaleX(scale);
+                child.setScaleY(scale);
+            }
         }
     }
 
     private void onScrollIdle() {
         Nearest nearest = getNearestScrollOffset();
         Log.i("JARED", "Nearest offset: " + nearest.getNearestOffset());
+        Log.i("JARED", "Nearest position: " + nearest.getNearestPosition());
         scrollViewToCenter(nearest);
     }
 
@@ -123,16 +117,15 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         int nearestPosition = 0;
         float shortestDistance = Integer.MAX_VALUE;
         for (int i = 0; i < getChildCount(); i++) {
-            if (i == 0 || i == getChildCount() - 1) {
-                continue;
-            }
             View child = getChildAt(i);
-            float distance = getCenterRelativePositionOf(child);
-            float absDistance = Math.abs(distance);
-            if (absDistance < shortestDistance) {
-                shortestDistance = absDistance;
-                nearestOffset = distance;
-                nearestPosition = i;
+            if (!(child instanceof PlaceholderView)) {
+                float distance = getCenterRelativePositionOf(child);
+                float absDistance = Math.abs(distance);
+                if (absDistance < shortestDistance) {
+                    shortestDistance = absDistance;
+                    nearestOffset = distance;
+                    nearestPosition = getPosition(child);
+                }
             }
         }
         return new Nearest(nearestPosition, nearestOffset);
