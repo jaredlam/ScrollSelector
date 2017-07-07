@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 
 import ss.jaredluo.com.stickerselector.model.Nearest;
+import ss.jaredluo.com.stickerselector.utils.ScreenUtils;
 import ss.jaredluo.com.stickerselector.view.PlaceholderView;
 
 /**
@@ -25,7 +26,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     private OnItemScaleChangeListener mOnItemScaleChangeListener;
 
     private Point recyclerCenter = new Point();
-    private int mChildHalfWidth;
+    private int mChildMaxWidth;
     private Context mContext;
 
     public SelectorLayoutManager(Context context) {
@@ -63,7 +64,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     private void initChildSize(RecyclerView.Recycler recycler) {
         View child = recycler.getViewForPosition(1);
         measureChildWithMargins(child, 0, 0);
-        mChildHalfWidth = getDecoratedMeasuredWidth(child) / 2;
+        mChildMaxWidth = (int) (child.getMeasuredWidth() * mMaxScale);
     }
 
     private void updateRecyclerDimensions() {
@@ -71,12 +72,13 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     private float getCenterRelativePositionOf(View v) {
-        return getDecoratedLeft(v) + mChildHalfWidth - recyclerCenter.x;
+        return getDecoratedLeft(v) + v.getWidth() / 2 - recyclerCenter.x;
     }
 
     @Override
     public int scrollHorizontallyBy(int dx, RecyclerView.Recycler recycler, RecyclerView.State state) {
         int result = super.scrollHorizontallyBy(dx, recycler, state);
+        Log.i("Jared", "scrollHorizontallyBy: " + result);
         applyItemTransformToChildren();
         return result;
     }
@@ -89,7 +91,6 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         } else if (state == RecyclerView.SCROLL_STATE_IDLE) {
             Log.i("Jared", "SCROLL_STATE_IDLE");
             onScrollIdle();
-
         } else if (state == RecyclerView.SCROLL_STATE_SETTLING) {
             Log.i("Jared", "SCROLL_STATE_SETTLING");
         }
@@ -102,13 +103,14 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                 float absDistance = Math.abs(getCenterRelativePositionOf(child));
 
                 float scale = 1f;
-                float centerWidth = mChildHalfWidth * 2;
+                float centerWidth = mChildMaxWidth;
                 if (absDistance <= centerWidth) {
                     float closeFactorToCenter = 1 - absDistance / centerWidth;
                     scale += (mMaxScale - 1f) * closeFactorToCenter;
                 }
                 if (mOnItemScaleChangeListener != null) {
                     int position = getPosition(child);
+                    Log.i("Jared", "Position: " + position + ", apply scale: " + scale + " , absDistance: " + absDistance);
                     mOnItemScaleChangeListener.onScale(position, scale);
                 }
 //
@@ -151,22 +153,30 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     private void scrollViewToCenter(final Nearest nearest) {
-        SelectorLinearSmoothScroller smoothScroller = new SelectorLinearSmoothScroller(mContext, nearest.getNearestOffset());
+        SelectorLinearSmoothScroller smoothScroller = new SelectorLinearSmoothScroller(mContext);
         smoothScroller.setTargetPosition(nearest.getNearestPosition());
         startSmoothScroll(smoothScroller);
     }
 
-    private class SelectorLinearSmoothScroller extends LinearSmoothScroller {
-        private float pendingScroll = 0;
+    public void smoothScrollToPosition(int position) {
+        float offset;
+        View child = findViewByPosition(position);
+        if (!(child instanceof PlaceholderView)) {
+            offset = getCenterRelativePositionOf(child);
+            scrollViewToCenter(new Nearest(position, offset));
+        }
 
-        public SelectorLinearSmoothScroller(Context context, float pendingScroll) {
+    }
+
+    private class SelectorLinearSmoothScroller extends LinearSmoothScroller {
+
+        public SelectorLinearSmoothScroller(Context context) {
             super(context);
-            this.pendingScroll = pendingScroll;
         }
 
         @Override
         public int calculateDxToMakeVisible(View view, int snapPreference) {
-            return (int) -pendingScroll;
+            return (int) (-getCenterRelativePositionOf(view));
         }
 
         @Override
@@ -178,13 +188,13 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         protected int calculateTimeForScrolling(int dx) {
             int maxScrollRange = getWidth() / 2;
             float dist = Math.min(Math.abs(dx), maxScrollRange);
-            return (int) (dist / maxScrollRange * 500);
+            return (int) (dist / maxScrollRange * 200);
         }
 
         @Nullable
         @Override
         public PointF computeScrollVectorForPosition(int targetPosition) {
-            return new PointF(pendingScroll, 0);
+            return new PointF(0, 0);
         }
     }
 

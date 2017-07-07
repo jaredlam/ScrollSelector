@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.util.HashMap;
 import java.util.List;
 
 import ss.jaredluo.com.stickerselector.layout.SelectorLayoutManager;
@@ -80,7 +79,7 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
     }
 
     @Override
-    final public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    final public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
         if (holder != null) {
             int type = getItemViewType(position);
             if (type == ITEM_TYPE_DATA) {
@@ -92,6 +91,12 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
                 layoutParams.topMargin = margin;
                 layoutParams.bottomMargin = margin;
                 holder.itemView.setLayoutParams(layoutParams);
+                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mLayoutManager.smoothScrollToPosition(holder.getAdapterPosition());
+                    }
+                });
                 onBindData((VH) holder, position);
             }
         }

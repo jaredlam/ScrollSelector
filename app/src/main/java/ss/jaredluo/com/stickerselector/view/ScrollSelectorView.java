@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 
 import ss.jaredluo.com.stickerselector.decoration.HorizontalSpaceItemDecoration;
 import ss.jaredluo.com.stickerselector.utils.ScreenUtils;
@@ -17,20 +18,20 @@ public class ScrollSelectorView extends RecyclerView {
 
     public ScrollSelectorView(Context context) {
         super(context);
-        initSpaceDecoration();
+        init();
     }
 
     public ScrollSelectorView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        initSpaceDecoration();
+        init();
     }
 
     public ScrollSelectorView(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        initSpaceDecoration();
+        init();
     }
 
-    private void initSpaceDecoration() {
+    private void init() {
         addItemDecoration(new HorizontalSpaceItemDecoration((int) ScreenUtils.convertDpToPx(10)));
     }
 
@@ -38,6 +39,5 @@ public class ScrollSelectorView extends RecyclerView {
     public void scrollBy(int x, int y) {
         super.scrollBy(x, y);
     }
-
 
 }
