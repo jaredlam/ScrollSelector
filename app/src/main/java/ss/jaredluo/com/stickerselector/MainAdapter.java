@@ -7,6 +7,7 @@ import android.widget.TextView;
 import java.util.List;
 
 import ss.jaredluo.com.stickerselector.adapter.ScrollSelectorAdapter;
+import ss.jaredluo.com.stickerselector.layout.SelectorLayoutManager;
 
 /**
  * Created by admin on 2017/7/6.
@@ -14,8 +15,8 @@ import ss.jaredluo.com.stickerselector.adapter.ScrollSelectorAdapter;
 
 public class MainAdapter extends ScrollSelectorAdapter<String, MainAdapter.ViewHolderData> {
 
-    public MainAdapter(List<String> data) {
-        super(data);
+    public MainAdapter(List<String> data, SelectorLayoutManager layoutManager) {
+        super(data, layoutManager);
     }
 
     @Override

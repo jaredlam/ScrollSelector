@@ -20,7 +20,9 @@ import ss.jaredluo.com.stickerselector.view.PlaceholderView;
 
 public class SelectorLayoutManager extends LinearLayoutManager {
 
-    private static float mInitScale = 0.6f;
+    private float mMaxScale = 1.5f;
+
+    private OnItemScaleChangeListener mOnItemScaleChangeListener;
 
     private Point recyclerCenter = new Point();
     private int mChildHalfWidth;
@@ -41,12 +43,12 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         this.mContext = context;
     }
 
-    public static float getInitScale() {
-        return mInitScale;
+    public float getMaxScale() {
+        return mMaxScale;
     }
 
-    public static void setInitScale(float initScale) {
-        mInitScale = initScale;
+    public void setMaxScale(float maxScale) {
+        mMaxScale = maxScale;
     }
 
     @Override
@@ -54,7 +56,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         super.onLayoutChildren(recycler, state);
         updateRecyclerDimensions();
         initChildSize(recycler);
-        applyItemTransformToChildren();
+//        applyItemTransformToChildren();
     }
 
 
@@ -99,15 +101,25 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             if (!(child instanceof PlaceholderView)) {
                 float absDistance = Math.abs(getCenterRelativePositionOf(child));
 
-                float scale = mInitScale;
+                float scale = 1f;
                 float centerWidth = mChildHalfWidth * 2;
                 if (absDistance <= centerWidth) {
                     float closeFactorToCenter = 1 - absDistance / centerWidth;
-                    scale += (1 - mInitScale) * closeFactorToCenter;
+                    scale += (mMaxScale - 1f) * closeFactorToCenter;
                 }
+                if (mOnItemScaleChangeListener != null) {
+                    int position = getPosition(child);
+                    mOnItemScaleChangeListener.onScale(position, scale);
+                }
+//
+//                ViewGroup.LayoutParams layoutParam = child.getLayoutParams();
+//                layoutParam.width = (int) (layoutParam.width * scale);
+//                layoutParam.height = (int) (layoutParam.height * scale);
+//                child.setLayoutParams(layoutParam);
+//                child.getParent().requestLayout();
+//                child.setScaleX(scale);
+//                child.setScaleY(scale);
 
-                child.setScaleX(scale);
-                child.setScaleY(scale);
             }
         }
     }
@@ -176,5 +188,12 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         }
     }
 
+    public void setOnItemScaleChangeListener(OnItemScaleChangeListener onItemScaleChangeListener) {
+        this.mOnItemScaleChangeListener = onItemScaleChangeListener;
+    }
+
+    public interface OnItemScaleChangeListener {
+        void onScale(int position, float scale);
+    }
 
 }

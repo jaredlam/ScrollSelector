@@ -1,10 +1,13 @@
 package ss.jaredluo.com.stickerselector.adapter;
 
+import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.HashMap;
 import java.util.List;
 
 import ss.jaredluo.com.stickerselector.layout.SelectorLayoutManager;
@@ -21,9 +24,42 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
     private static final int ITEM_TYPE_PLACE_HOLDER = 0x11;
 
     private final List<T> mData;
+    private final SelectorLayoutManager mLayoutManager;
+    private final SparseArray<Float> mScaleMap;
+    private int mDataItemWidth;
+    private int mDataItemHeight;
+    private int mFullHeight;
 
-    public ScrollSelectorAdapter(List<T> data) {
+    public ScrollSelectorAdapter(List<T> data, SelectorLayoutManager layoutManager) {
         mData = data;
+        mLayoutManager = layoutManager;
+        mScaleMap = new SparseArray<>();
+        for (int i = 0; i < mData.size(); i++) {
+            mScaleMap.put(i, 1.0f);
+        }
+        mLayoutManager.setOnItemScaleChangeListener(new SelectorLayoutManager.OnItemScaleChangeListener() {
+            @Override
+            public void onScale(int position, float scale) {
+                mScaleMap.put(position, scale);
+
+                new Handler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        notifyDataSetChanged();
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        View dataView = LayoutInflater.from(recyclerView.getContext()).inflate(getItemResourceId(), recyclerView, false);
+        mFullHeight = (int) (mLayoutManager.getMaxScale() * dataView.getLayoutParams().height);
+        ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
+        params.height = mFullHeight;
+        recyclerView.setLayoutParams(params);
     }
 
     @Override
@@ -33,12 +69,11 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
             PlaceholderView view = new PlaceholderView(parent.getContext());
             view.setBackgroundResource(android.R.color.transparent);
             int width = ScreenUtils.getScreenWidth();
-            int dataItemWidth = dataView.getLayoutParams().width;
-            view.setLayoutParams(new ViewGroup.LayoutParams(width / 2 + dataItemWidth / 2, 1));
+            mDataItemWidth = dataView.getLayoutParams().width;
+            mDataItemHeight = dataView.getLayoutParams().height;
+            view.setLayoutParams(new ViewGroup.LayoutParams(width / 2 + mDataItemWidth / 2, 1));
             return new ViewHolderPlaceHolder(view);
         } else {
-            dataView.setScaleX(SelectorLayoutManager.getInitScale());
-            dataView.setScaleY(SelectorLayoutManager.getInitScale());
             return createViewHolder(dataView);
         }
 
@@ -49,6 +84,14 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
         if (holder != null) {
             int type = getItemViewType(position);
             if (type == ITEM_TYPE_DATA) {
+                float scale = mScaleMap.get(position, 1f);
+                RecyclerView.LayoutParams layoutParams = (RecyclerView.LayoutParams) holder.itemView.getLayoutParams();
+                layoutParams.width = (int) (mDataItemWidth * scale);
+                layoutParams.height = (int) (mDataItemHeight * scale);
+                int margin = (mFullHeight - layoutParams.height) / 2;
+                layoutParams.topMargin = margin;
+                layoutParams.bottomMargin = margin;
+                holder.itemView.setLayoutParams(layoutParams);
                 onBindData((VH) holder, position);
             }
         }

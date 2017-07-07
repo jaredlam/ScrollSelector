@@ -6,6 +6,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 
 import ss.jaredluo.com.stickerselector.decoration.HorizontalSpaceItemDecoration;
+import ss.jaredluo.com.stickerselector.utils.ScreenUtils;
 
 /**
  * Created by admin on 2017/7/4.
@@ -29,8 +30,8 @@ public class ScrollSelectorView extends RecyclerView {
         initSpaceDecoration();
     }
 
-    private void initSpaceDecoration(){
-        addItemDecoration(new HorizontalSpaceItemDecoration(0));
+    private void initSpaceDecoration() {
+        addItemDecoration(new HorizontalSpaceItemDecoration((int) ScreenUtils.convertDpToPx(10)));
     }
 
     @Override

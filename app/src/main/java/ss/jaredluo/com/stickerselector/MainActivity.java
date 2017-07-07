@@ -23,14 +23,15 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mRecyclerView = (ScrollSelectorView) findViewById(R.id.recycler_view);
-        SelectorLayoutManager.setInitScale(.5f);
+
         mLayoutManager = new SelectorLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        mLayoutManager.setMaxScale(1.5f);
         mRecyclerView.setLayoutManager(mLayoutManager);
         List<String> data = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             data.add(i + "");
         }
-        mAdapter = new MainAdapter(data);
+        mAdapter = new MainAdapter(data, mLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
     }
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="80dp"
-    android:layout_height="80dp"
+    android:layout_width="50dp"
+    android:layout_height="50dp"
     android:background="@drawable/round_bg">
 
     <TextView
@@ -9,6 +9,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="Sticker" />
+        android:text="Sticker"
+        android:textSize="10sp" />
 
 </RelativeLayout>
