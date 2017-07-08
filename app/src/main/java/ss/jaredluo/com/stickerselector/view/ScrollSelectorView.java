@@ -16,6 +16,8 @@ import ss.jaredluo.com.stickerselector.utils.ScreenUtils;
 public class ScrollSelectorView extends RecyclerView {
 
 
+    private int mHorizontalSpace;
+
     public ScrollSelectorView(Context context) {
         super(context);
         init();
@@ -32,7 +34,12 @@ public class ScrollSelectorView extends RecyclerView {
     }
 
     private void init() {
-        addItemDecoration(new HorizontalSpaceItemDecoration((int) ScreenUtils.convertDpToPx(10)));
+        mHorizontalSpace = (int) ScreenUtils.convertDpToPx(10);
+        addItemDecoration(new HorizontalSpaceItemDecoration(mHorizontalSpace));
+    }
+
+    public int getHorizontalSpace() {
+        return mHorizontalSpace;
     }
 
     @Override

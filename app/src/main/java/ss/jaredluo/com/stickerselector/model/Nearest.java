@@ -6,11 +6,9 @@ package ss.jaredluo.com.stickerselector.model;
 
 public class Nearest {
     private int nearestPosition;
-    private float nearestOffset;
 
-    public Nearest(int nearestPosition, float nearestOffset) {
+    public Nearest(int nearestPosition) {
         this.nearestPosition = nearestPosition;
-        this.nearestOffset = nearestOffset;
     }
 
     public int getNearestPosition() {
@@ -21,11 +19,5 @@ public class Nearest {
         this.nearestPosition = nearestPosition;
     }
 
-    public float getNearestOffset() {
-        return nearestOffset;
-    }
 
-    public void setNearestOffset(float nearestOffset) {
-        this.nearestOffset = nearestOffset;
-    }
 }

@@ -12,6 +12,7 @@ import java.util.List;
 import ss.jaredluo.com.stickerselector.layout.SelectorLayoutManager;
 import ss.jaredluo.com.stickerselector.utils.ScreenUtils;
 import ss.jaredluo.com.stickerselector.view.PlaceholderView;
+import ss.jaredluo.com.stickerselector.view.ScrollSelectorView;
 
 /**
  * Created by admin on 2017/7/4.
@@ -28,6 +29,7 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
     private int mDataItemWidth;
     private int mDataItemHeight;
     private int mFullHeight;
+    private int mHorizontalSpace;
 
     public ScrollSelectorAdapter(List<T> data, SelectorLayoutManager layoutManager) {
         mData = data;
@@ -59,6 +61,8 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
         ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
         params.height = mFullHeight;
         recyclerView.setLayoutParams(params);
+        ScrollSelectorView scrollView = (ScrollSelectorView) recyclerView;
+        mHorizontalSpace = scrollView.getHorizontalSpace();
     }
 
     @Override
@@ -70,7 +74,7 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
             int width = ScreenUtils.getScreenWidth();
             mDataItemWidth = dataView.getLayoutParams().width;
             mDataItemHeight = dataView.getLayoutParams().height;
-            view.setLayoutParams(new ViewGroup.LayoutParams(width / 2 + mDataItemWidth / 2, 1));
+            view.setLayoutParams(new ViewGroup.LayoutParams((int) (width / 2 + mDataItemWidth * mLayoutManager.getMaxScale() / 2), 1));
             return new ViewHolderPlaceHolder(view);
         } else {
             return createViewHolder(dataView);
