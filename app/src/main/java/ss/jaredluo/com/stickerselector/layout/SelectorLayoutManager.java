@@ -10,11 +10,8 @@ import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import ss.jaredluo.com.stickerselector.model.Nearest;
-import ss.jaredluo.com.stickerselector.utils.ScreenUtils;
 import ss.jaredluo.com.stickerselector.view.PlaceholderView;
 
 /**
@@ -26,6 +23,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     private float mMaxScale = 1.5f;
 
     private OnItemScaleChangeListener mOnItemScaleChangeListener;
+    private OnItemSelectedListener mOnItemSelectedListener;
 
     private Point recyclerCenter = new Point();
     private int mChildMaxWidth;
@@ -34,6 +32,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     private boolean isLayout;
     private boolean mIsReverse;
     private int mCurrentPosition;
+    private boolean mIsHideUnSelected = true;
 
     public SelectorLayoutManager(Context context) {
         super(context);
@@ -76,6 +75,34 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         }
     }
 
+    public void hideUnSelected() {
+        mIsHideUnSelected = false;
+        for (int i = 0; i < getItemCount(); i++) {
+            if (i != mCurrentPosition) {
+                View child = findViewByPosition(i);
+                if (child != null) {
+                    child.setVisibility(View.INVISIBLE);
+                }
+            }
+        }
+    }
+
+    public boolean isHideUnSelected() {
+        return mIsHideUnSelected;
+    }
+
+    public void showUnSelected() {
+        mIsHideUnSelected = true;
+        for (int i = 0; i < getItemCount(); i++) {
+            if (i != mCurrentPosition) {
+                View child = findViewByPosition(i);
+                if (child != null) {
+                    child.setVisibility(View.VISIBLE);
+                }
+            }
+        }
+    }
+
     private void updateRecyclerDimensions() {
         recyclerCenter.set(getWidth() / 2, getHeight() / 2);
     }
@@ -93,9 +120,12 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     @Override
     public int scrollHorizontallyBy(int dx, RecyclerView.Recycler recycler, RecyclerView.State state) {
-        int result = super.scrollHorizontallyBy(dx, recycler, state);
-        Log.i("Jared", "scrollHorizontallyBy: " + result + ", offset:" + computeHorizontalScrollOffset(state));
-        applyItemTransformToChildren();
+        int result = 0;
+        if (mIsHideUnSelected) {
+            result = super.scrollHorizontallyBy(dx, recycler, state);
+            Log.i("Jared", "scrollHorizontallyBy: " + result + ", offset:" + computeHorizontalScrollOffset(state));
+            applyItemTransformToChildren();
+        }
         return result;
     }
 
@@ -117,6 +147,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             View child = getChildAt(i);
             if (!(child instanceof PlaceholderView)) {
                 float absDistance = Math.abs(getCenterRelativePositionOf(child));
+                Log.i("Jared", "Position is " + getPosition(child) + ", absDistance is: " + absDistance);
 
                 float scale = 1f;
                 float centerWidth = mChildMaxWidth / 2 + mChildStartWidth / 2;
@@ -128,6 +159,12 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                     int position = getPosition(child);
                     Log.i("Jared", "Position: " + position + ", apply scale: " + scale + " , absDistance: " + absDistance);
                     mOnItemScaleChangeListener.onScale(position, scale);
+                }
+                if (scale == mMaxScale) {
+                    if (mOnItemSelectedListener != null) {
+                        int position = getPosition(child);
+                        mOnItemSelectedListener.onSelected(position);
+                    }
                 }
 //
 //                ViewGroup.LayoutParams layoutParam = child.getLayoutParams();
@@ -185,6 +222,10 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     }
 
+    public int getCurrentPosition() {
+        return mCurrentPosition;
+    }
+
     private class SelectorLinearSmoothScroller extends LinearSmoothScroller {
 
         public SelectorLinearSmoothScroller(Context context) {
@@ -223,6 +264,14 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     public interface OnItemScaleChangeListener {
         void onScale(int position, float scale);
+    }
+
+    public void setOnItemSelectedListener(OnItemSelectedListener onItemSelectedListener) {
+        this.mOnItemSelectedListener = onItemSelectedListener;
+    }
+
+    public interface OnItemSelectedListener {
+        void onSelected(int position);
     }
 
 }

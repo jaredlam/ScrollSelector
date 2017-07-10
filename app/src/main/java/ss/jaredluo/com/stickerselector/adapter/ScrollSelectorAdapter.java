@@ -29,7 +29,6 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
     private int mDataItemWidth;
     private int mDataItemHeight;
     private int mFullHeight;
-    private int mHorizontalSpace;
 
     public ScrollSelectorAdapter(List<T> data, SelectorLayoutManager layoutManager) {
         mData = data;
@@ -53,6 +52,10 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
         });
     }
 
+    public SelectorLayoutManager getLayoutManager() {
+        return mLayoutManager;
+    }
+
     @Override
     public void onAttachedToRecyclerView(RecyclerView recyclerView) {
         super.onAttachedToRecyclerView(recyclerView);
@@ -62,7 +65,6 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
         params.height = mFullHeight;
         recyclerView.setLayoutParams(params);
         ScrollSelectorView scrollView = (ScrollSelectorView) recyclerView;
-        mHorizontalSpace = scrollView.getHorizontalSpace();
     }
 
     @Override
@@ -95,12 +97,6 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
                 layoutParams.topMargin = margin;
                 layoutParams.bottomMargin = margin;
                 holder.itemView.setLayoutParams(layoutParams);
-                holder.itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        mLayoutManager.smoothScrollToPosition(holder.getAdapterPosition());
-                    }
-                });
                 onBindData((VH) holder, position);
             }
         }

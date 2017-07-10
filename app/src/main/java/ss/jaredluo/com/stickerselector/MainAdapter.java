@@ -8,6 +8,7 @@ import java.util.List;
 
 import ss.jaredluo.com.stickerselector.adapter.ScrollSelectorAdapter;
 import ss.jaredluo.com.stickerselector.layout.SelectorLayoutManager;
+import ss.jaredluo.com.stickerselector.view.CircleSelector;
 
 /**
  * Created by admin on 2017/7/6.
@@ -30,16 +31,43 @@ public class MainAdapter extends ScrollSelectorAdapter<String, MainAdapter.ViewH
     }
 
     @Override
-    public void onBindData(ViewHolderData holder, int position) {
-        holder.textView.setText("Sticker " + position);
+    public void onBindData(final ViewHolderData holder, int position) {
+        final CircleSelector selector = (CircleSelector) holder.itemView;
+        if (position == getLayoutManager().getCurrentPosition()) {
+            selector.setProgressWithoutAnimation(0);
+            selector.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    selector.setProgress(100);
+                }
+            });
+            selector.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    SelectorLayoutManager layoutManager = getLayoutManager();
+                    if (layoutManager.isHideUnSelected()) {
+                        layoutManager.hideUnSelected();
+                    } else {
+                        layoutManager.showUnSelected();
+                    }
+                    return true;
+                }
+            });
+        } else {
+            selector.setProgressWithoutAnimation(100);
+            selector.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    getLayoutManager().smoothScrollToPosition(holder.getAdapterPosition());
+                }
+            });
+        }
     }
 
     public static class ViewHolderData extends RecyclerView.ViewHolder {
-        public TextView textView;
 
         public ViewHolderData(View dataView) {
             super(dataView);
-            textView = (TextView) dataView.findViewById(R.id.name);
         }
     }
 }
