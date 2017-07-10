@@ -12,6 +12,7 @@ import android.util.AttributeSet;
  */
 
 public class CircleSelector extends CircleImageView {
+    private final int TOTAL_DURATION = 1000;
     private float mProgressAngle = 0;
     private ValueAnimator mAnimation;
 
@@ -43,7 +44,9 @@ public class CircleSelector extends CircleImageView {
             mAnimation.cancel();
         }
         mAnimation = ValueAnimator.ofFloat(mProgressAngle, targetAngle);
-        mAnimation.setDuration(1000);
+        float absDiffAngle = Math.abs(mProgressAngle - targetAngle);
+        int duration = (int) (absDiffAngle / 360f * TOTAL_DURATION);
+        mAnimation.setDuration(duration);
         mAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {

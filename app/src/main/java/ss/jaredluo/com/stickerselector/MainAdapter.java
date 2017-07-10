@@ -38,7 +38,7 @@ public class MainAdapter extends ScrollSelectorAdapter<String, MainAdapter.ViewH
             selector.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    selector.setProgress(100);
+                    selector.setProgress(60);
                 }
             });
             selector.setOnLongClickListener(new View.OnLongClickListener() {
