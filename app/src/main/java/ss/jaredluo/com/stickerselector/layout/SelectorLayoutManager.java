@@ -10,6 +10,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 
 import ss.jaredluo.com.stickerselector.model.Nearest;
 import ss.jaredluo.com.stickerselector.view.PlaceholderView;
@@ -32,21 +33,57 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     private boolean isLayout;
     private boolean mIsReverse;
     private int mCurrentPosition;
-    private boolean mIsHideUnSelected = true;
+    private boolean mCanScroll = true;
+    private ViewTreeObserver.OnGlobalLayoutListener mGlobalListener;
 
     public SelectorLayoutManager(Context context) {
         super(context);
         this.mContext = context;
+        init();
     }
 
     public SelectorLayoutManager(Context context, int orientation, boolean reverseLayout) {
         super(context, orientation, reverseLayout);
         this.mContext = context;
+        init();
     }
 
     public SelectorLayoutManager(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         this.mContext = context;
+        init();
+    }
+
+    @Override
+    public void onAttachedToWindow(final RecyclerView view) {
+        super.onAttachedToWindow(view);
+//        if (mGlobalListener == null) {
+//            mGlobalListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+//                @Override
+//                public void onGlobalLayout() {
+//                    int firstDataChildLeft = 0;
+//                    for (int i = 0; i < view.getChildCount(); i++) {
+//                        View child = view.getChildAt(i);
+//                        ViewCompat.setZ(child, view.getChildCount() - i);
+//                        if (i == 1) {
+//                            firstDataChildLeft = child.getLeft();
+//                        } else if (i > 1) {
+//                            int left = firstDataChildLeft + (int) ((i - 1) * ScreenUtils.convertDpToPx(10));
+//                            int deltaX = left - child.getLeft();
+//                            child.setTranslationX(deltaX);
+//                        }
+//                    }
+//                    mCanScroll = false;
+//                    view.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+//                }
+//            };
+//            view.getViewTreeObserver().addOnGlobalLayoutListener(mGlobalListener);
+//        }
+
+    }
+
+    private void init() {
+
     }
 
     public float getMaxScale() {
@@ -64,7 +101,6 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         initChildSize(recycler);
     }
 
-
     private void initChildSize(RecyclerView.Recycler recycler) {
         if (!isLayout) {
             View child = recycler.getViewForPosition(1);
@@ -76,7 +112,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     public void hideUnSelected() {
-        mIsHideUnSelected = false;
+        mCanScroll = false;
         for (int i = 0; i < getItemCount(); i++) {
             if (i != mCurrentPosition) {
                 View child = findViewByPosition(i);
@@ -88,11 +124,11 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     public boolean isHideUnSelected() {
-        return mIsHideUnSelected;
+        return mCanScroll;
     }
 
     public void showUnSelected() {
-        mIsHideUnSelected = true;
+        mCanScroll = true;
         for (int i = 0; i < getItemCount(); i++) {
             if (i != mCurrentPosition) {
                 View child = findViewByPosition(i);
@@ -118,10 +154,15 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         return distance;
     }
 
+
+    private float getStartRelativePositionOf(View v) {
+        return -((RecyclerView) v.getParent()).computeHorizontalScrollOffset();
+    }
+
     @Override
     public int scrollHorizontallyBy(int dx, RecyclerView.Recycler recycler, RecyclerView.State state) {
         int result = 0;
-        if (mIsHideUnSelected) {
+        if (mCanScroll) {
             result = super.scrollHorizontallyBy(dx, recycler, state);
             Log.i("Jared", "scrollHorizontallyBy: " + result + ", offset:" + computeHorizontalScrollOffset(state));
             applyItemTransformToChildren();
@@ -199,6 +240,12 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                 }
             }
         }
+        //回到起始位置
+        if (nearestPosition == 1) {
+            if (shortestDistance > 0 && shortestDistance > (mChildMaxWidth + mChildStartWidth) / 2) {
+                nearestPosition = 0;
+            }
+        }
         return new Nearest(nearestPosition);
     }
 
@@ -234,7 +281,13 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
         @Override
         public int calculateDxToMakeVisible(View view, int snapPreference) {
-            int nearestOffset = (int) (-getCenterRelativePositionOf(view));
+            int nearestOffset;
+            if (mCurrentPosition != 0) {
+                nearestOffset = (int) (-getCenterRelativePositionOf(view));
+            } else {
+                //回到起始位置
+                nearestOffset = (int) (-getStartRelativePositionOf(view));
+            }
             Log.i("Jared", "nearest Offset: " + nearestOffset);
             return nearestOffset;
         }
@@ -273,5 +326,50 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     public interface OnItemSelectedListener {
         void onSelected(int position);
     }
+
+//    public void startExpandAnim(RecyclerView view, int expandPosition) {
+//        LinearLayoutManager layoutManager = (LinearLayoutManager) view.getLayoutManager();
+//        final int firstVisible = layoutManager.findFirstVisibleItemPosition();
+//        final int lastVisible = layoutManager.findLastVisibleItemPosition();
+//        if (firstVisible == -1 || lastVisible == -1) {
+//            return;
+//        }
+//        for (int i = firstVisible; i <= lastVisible; i++) {
+//            final View child = layoutManager.findViewByPosition(i);
+//            //final int startPosition = expandPosition - child.getWidth() * i;
+//            final int startPosition = expandPosition - child.getLeft();
+//
+//            ScaleAnimation scale = new ScaleAnimation(.5f, 1f, 1f, 1f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+//            TranslateAnimation keepTransPosition = new TranslateAnimation(startPosition, startPosition, 0, 0);
+//            AnimationSet set = new AnimationSet(true);
+//            set.setInterpolator(new AccelerateInterpolator());
+//            set.setDuration(1000);
+//            set.addAnimation(scale);
+//            set.addAnimation(keepTransPosition);
+//            child.startAnimation(set);
+//
+//
+//            set.setAnimationListener(new Animation.AnimationListener() {
+//                @Override
+//                public void onAnimationStart(Animation animation) {
+//
+//                }
+//
+//                @Override
+//                public void onAnimationEnd(Animation animation) {
+//                    TranslateAnimation anim = new TranslateAnimation(startPosition, 0, 0, 0);
+//                    anim.setDuration(1000);
+//                    anim.setInterpolator(new OvershootInterpolator());
+//                    child.startAnimation(anim);
+//                }
+//
+//                @Override
+//                public void onAnimationRepeat(Animation animation) {
+//
+//                }
+//            });
+//
+//        }
+//    }
 
 }
