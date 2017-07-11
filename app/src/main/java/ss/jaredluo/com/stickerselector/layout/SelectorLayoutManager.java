@@ -149,9 +149,36 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             offset = -offset;
         }
 
+        //处理最后一个Item继续向右滑动的情况
+        offset = dealLastItemOverScroll(v, offset);
+
+        Log.i("Jared", "vPosition: " + getPosition(v) + "  , negative offset:" + offset + " , mIsReverse: " + mIsReverse);
+
         int distance = v.getLeft() + v.getWidth() / 2 + offset - recyclerCenter.x;
-        Log.i("Jared", "now position: " + getPosition(v) + ". distance is: " + distance);
+        Log.i("Jared", "now position: " + getPosition(v) + ". distance is: " + distance + " , mIsReverse: " + mIsReverse);
         return distance;
+    }
+
+    private int dealLastItemOverScroll(View v, int offset) {
+        if (getPosition(v) == getItemCount() - 2) {
+            boolean isAtLast = false;
+            for (int i = 0; i < getChildCount(); i++) {
+                View child = getChildAt(i);
+                if (child != null && child != v && getPosition(child) != 0 && getPosition(child) != getItemCount() - 1) {
+                    if (child.getWidth() > mChildStartWidth) {
+                        isAtLast = false;
+                        break;
+                    } else {
+                        isAtLast = true;
+                    }
+                }
+            }
+            if (isAtLast) {
+                offset = -offset;
+            }
+        }
+
+        return offset;
     }
 
 
@@ -251,12 +278,13 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     private void scrollViewToCenter(final Nearest nearest) {
         SelectorLinearSmoothScroller smoothScroller = new SelectorLinearSmoothScroller(mContext);
-        if (mCurrentPosition >= nearest.getNearestPosition()) {
+        if (mCurrentPosition > nearest.getNearestPosition()) {
             mIsReverse = true;
-        } else {
+        } else if (mCurrentPosition < nearest.getNearestPosition()) {
             mIsReverse = false;
         }
         mCurrentPosition = nearest.getNearestPosition();
+        Log.i("Jared", "Current Position changed: " + mCurrentPosition + ", mIsReverse: " + mIsReverse);
         smoothScroller.setTargetPosition(mCurrentPosition);
         startSmoothScroll(smoothScroller);
     }
