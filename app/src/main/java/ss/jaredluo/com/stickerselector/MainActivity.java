@@ -9,6 +9,7 @@ import java.util.List;
 
 import ss.jaredluo.com.stickerselector.adapter.ScrollSelectorAdapter;
 import ss.jaredluo.com.stickerselector.layout.SelectorLayoutManager;
+import ss.jaredluo.com.stickerselector.utils.ScreenUtils;
 import ss.jaredluo.com.stickerselector.view.ScrollSelectorView;
 
 public class MainActivity extends AppCompatActivity {
@@ -26,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
         mLayoutManager = new SelectorLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         mLayoutManager.setMaxScale(1.5f);
+        mLayoutManager.setMarginToCenter(ScreenUtils.convertDpToPx(20));
         mRecyclerView.setLayoutManager(mLayoutManager);
         List<String> data = new ArrayList<>();
         for (int i = 0; i < 5; i++) {

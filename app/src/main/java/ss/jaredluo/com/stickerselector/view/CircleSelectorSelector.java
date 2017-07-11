@@ -11,20 +11,20 @@ import android.util.AttributeSet;
  * Created by admin on 2017/7/10.
  */
 
-public class CircleSelector extends CircleImageView {
+public class CircleSelectorSelector extends CircleSelectorImageView {
     private final int TOTAL_DURATION = 1000;
     private float mProgressAngle = 0;
     private ValueAnimator mAnimation;
 
-    public CircleSelector(Context context) {
+    public CircleSelectorSelector(Context context) {
         super(context);
     }
 
-    public CircleSelector(Context context, AttributeSet attrs) {
+    public CircleSelectorSelector(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public CircleSelector(Context context, AttributeSet attrs, int defStyle) {
+    public CircleSelectorSelector(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 

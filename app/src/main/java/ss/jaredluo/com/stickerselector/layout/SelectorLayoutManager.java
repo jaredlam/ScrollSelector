@@ -23,6 +23,8 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     private float mMaxScale = 1.5f;
 
+    private float mMarginToCenter = 100;
+
     private OnItemScaleChangeListener mOnItemScaleChangeListener;
     private OnItemSelectedListener mOnItemSelectedListener;
 
@@ -92,6 +94,14 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     public void setMaxScale(float maxScale) {
         mMaxScale = maxScale;
+    }
+
+    public float getMarginToCenter() {
+        return mMarginToCenter;
+    }
+
+    public void setMarginToCenter(float mMarginToCenter) {
+        this.mMarginToCenter = mMarginToCenter;
     }
 
     @Override

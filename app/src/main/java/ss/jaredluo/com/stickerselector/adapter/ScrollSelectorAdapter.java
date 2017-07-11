@@ -76,7 +76,7 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
             int width = ScreenUtils.getScreenWidth();
             mDataItemWidth = dataView.getLayoutParams().width;
             mDataItemHeight = dataView.getLayoutParams().height;
-            view.setLayoutParams(new ViewGroup.LayoutParams((int) (width / 2 + mDataItemWidth * mLayoutManager.getMaxScale() / 2), 1));
+            view.setLayoutParams(new ViewGroup.LayoutParams((int) (width / 2 + mDataItemWidth * mLayoutManager.getMaxScale() / 2 + mLayoutManager.getMarginToCenter()), 1));
             return new ViewHolderPlaceHolder(view);
         } else {
             return createViewHolder(dataView);

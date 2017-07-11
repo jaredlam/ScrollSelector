@@ -2,13 +2,12 @@ package ss.jaredluo.com.stickerselector;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.TextView;
 
 import java.util.List;
 
 import ss.jaredluo.com.stickerselector.adapter.ScrollSelectorAdapter;
 import ss.jaredluo.com.stickerselector.layout.SelectorLayoutManager;
-import ss.jaredluo.com.stickerselector.view.CircleSelector;
+import ss.jaredluo.com.stickerselector.view.CircleSelectorSelector;
 
 /**
  * Created by admin on 2017/7/6.
@@ -32,7 +31,7 @@ public class MainAdapter extends ScrollSelectorAdapter<String, MainAdapter.ViewH
 
     @Override
     public void onBindData(final ViewHolderData holder, int position) {
-        final CircleSelector selector = (CircleSelector) holder.itemView;
+        final CircleSelectorSelector selector = (CircleSelectorSelector) holder.itemView;
         if (position == getLayoutManager().getCurrentPosition()) {
             selector.setProgressWithoutAnimation(0);
             selector.setOnClickListener(new View.OnClickListener() {
