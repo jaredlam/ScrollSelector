@@ -7,7 +7,6 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import ss.jaredluo.com.stickerselector.decoration.HorizontalSpaceItemDecoration;
-import ss.jaredluo.com.stickerselector.utils.ScreenUtils;
 
 /**
  * Created by admin on 2017/7/4.
@@ -16,7 +15,7 @@ import ss.jaredluo.com.stickerselector.utils.ScreenUtils;
 public class ScrollSelectorView extends RecyclerView {
 
 
-    private int mHorizontalSpace;
+    private HorizontalSpaceItemDecoration mDecoration;
 
     public ScrollSelectorView(Context context) {
         super(context);
@@ -34,13 +33,16 @@ public class ScrollSelectorView extends RecyclerView {
     }
 
     private void init() {
-        mHorizontalSpace = (int) ScreenUtils.convertDpToPx(10);
-        addItemDecoration(new HorizontalSpaceItemDecoration(mHorizontalSpace));
         setOverScrollMode(View.OVER_SCROLL_NEVER);
     }
 
-    public int getHorizontalSpace() {
-        return mHorizontalSpace;
+    public void setSpace(int space) {
+        if (mDecoration == null) {
+            mDecoration = new HorizontalSpaceItemDecoration();
+        }
+        mDecoration.setHorizontalSpaceWidth(space);
+        removeItemDecoration(mDecoration);
+        addItemDecoration(mDecoration);
     }
 
     @Override
