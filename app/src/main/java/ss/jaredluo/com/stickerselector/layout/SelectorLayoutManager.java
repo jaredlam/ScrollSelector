@@ -102,7 +102,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     private void initChildSize(RecyclerView.Recycler recycler) {
-        if (!isLayout) {
+        if (!isLayout && getItemCount() > 1) {
             View child = recycler.getViewForPosition(1);
             measureChildWithMargins(child, 0, 0);
             mChildStartWidth = child.getMeasuredWidth();
