@@ -365,6 +365,10 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         void onSelected(int position);
     }
 
+    public boolean isSelected() {
+        return mCurrentPosition != 0;
+    }
+
 //    public void startExpandAnim(RecyclerView view, int expandPosition) {
 //        LinearLayoutManager layoutManager = (LinearLayoutManager) view.getLayoutManager();
 //        final int firstVisible = layoutManager.findFirstVisibleItemPosition();

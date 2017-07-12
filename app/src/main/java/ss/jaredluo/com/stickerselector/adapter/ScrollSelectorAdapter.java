@@ -64,7 +64,6 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
         ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
         params.height = mFullHeight;
         recyclerView.setLayoutParams(params);
-        ScrollSelectorView scrollView = (ScrollSelectorView) recyclerView;
     }
 
     @Override
