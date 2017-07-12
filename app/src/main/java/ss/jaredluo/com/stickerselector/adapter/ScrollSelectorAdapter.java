@@ -2,11 +2,14 @@ package ss.jaredluo.com.stickerselector.adapter;
 
 import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 import ss.jaredluo.com.stickerselector.layout.SelectorLayoutManager;
@@ -17,6 +20,7 @@ import ss.jaredluo.com.stickerselector.view.ScrollSelectorView;
 /**
  * Created by admin on 2017/7/4.
  */
+
 
 public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -99,6 +103,13 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
                 onBindData((VH) holder, position);
             }
         }
+    }
+
+    public boolean isCurrentPosition(int position) {
+        float currentScale = mScaleMap.get(position, 1f);
+        BigDecimal bd = new BigDecimal(currentScale);
+        currentScale = bd.setScale(1, RoundingMode.HALF_UP).floatValue();
+        return currentScale == getLayoutManager().getMaxScale();
     }
 
     public abstract RecyclerView.ViewHolder createViewHolder(View dataView);
