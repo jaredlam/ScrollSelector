@@ -44,7 +44,7 @@ public class MainAdapter extends ScrollSelectorAdapter<String, MainAdapter.ViewH
                 @Override
                 public boolean onLongClick(View v) {
                     SelectorLayoutManager layoutManager = getLayoutManager();
-                    if (layoutManager.isHideUnSelected()) {
+                    if (layoutManager.isShowingUnSelected()) {
                         layoutManager.hideUnSelected();
                     } else {
                         layoutManager.showUnSelected();

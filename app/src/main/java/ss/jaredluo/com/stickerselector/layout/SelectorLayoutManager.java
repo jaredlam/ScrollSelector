@@ -35,7 +35,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     private boolean isLayout;
     private boolean mIsReverse;
     private int mCurrentPosition;
-    private boolean mCanScroll = true;
+    private boolean mIsShowingUnSelected = true;
     private ViewTreeObserver.OnGlobalLayoutListener mGlobalListener;
 
     public SelectorLayoutManager(Context context) {
@@ -122,7 +122,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     public void hideUnSelected() {
-        mCanScroll = false;
+        mIsShowingUnSelected = false;
         for (int i = 0; i < getItemCount(); i++) {
             if (i != mCurrentPosition) {
                 View child = findViewByPosition(i);
@@ -133,12 +133,12 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         }
     }
 
-    public boolean isHideUnSelected() {
-        return mCanScroll;
+    public boolean isShowingUnSelected() {
+        return mIsShowingUnSelected;
     }
 
     public void showUnSelected() {
-        mCanScroll = true;
+        mIsShowingUnSelected = true;
         for (int i = 0; i < getItemCount(); i++) {
             if (i != mCurrentPosition) {
                 View child = findViewByPosition(i);
@@ -199,7 +199,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     @Override
     public int scrollHorizontallyBy(int dx, RecyclerView.Recycler recycler, RecyclerView.State state) {
         int result = 0;
-        if (mCanScroll) {
+        if (mIsShowingUnSelected) {
             result = super.scrollHorizontallyBy(dx, recycler, state);
             Log.i("Jared", "scrollHorizontallyBy: " + result + ", offset:" + computeHorizontalScrollOffset(state));
             applyItemTransformToChildren();
@@ -304,7 +304,6 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         if (!(child instanceof PlaceholderView)) {
             scrollViewToCenter(new Nearest(position));
         }
-
     }
 
     public int getCurrentPosition() {
@@ -363,10 +362,6 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     public interface OnItemSelectedListener {
         void onSelected(int position);
-    }
-
-    public boolean isSelected() {
-        return mCurrentPosition != 0;
     }
 
 //    public void startExpandAnim(RecyclerView view, int expandPosition) {

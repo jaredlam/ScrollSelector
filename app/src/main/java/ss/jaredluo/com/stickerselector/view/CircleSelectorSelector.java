@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 
 /**
  * Created by admin on 2017/7/10.
@@ -29,17 +30,16 @@ public class CircleSelectorSelector extends CircleSelectorImageView {
     }
 
     @Override
-    public void onDrawForeground(Canvas canvas) {
-        super.onDrawForeground(canvas);
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
         Paint paint = new Paint();
         paint.setColor(0x50000000);
         RectF oval = new RectF(0, 0, getMeasuredWidth(), getMeasuredHeight());
-        float actualSweepAngle = 360 - mProgressAngle;
-        canvas.drawArc(oval, mProgressAngle - 90, actualSweepAngle, true, paint);
+        canvas.drawArc(oval, -90, -mProgressAngle, true, paint);
     }
 
     public void setProgress(int progress) {
-        float targetAngle = (progress / 100f) * 360f;
+        float targetAngle = 360f - (progress / 100f) * 360f;
         if (mAnimation != null) {
             mAnimation.cancel();
         }
@@ -58,7 +58,7 @@ public class CircleSelectorSelector extends CircleSelectorImageView {
     }
 
     public void setProgressWithoutAnimation(int progress) {
-        mProgressAngle = (progress / 100f) * 360f;
+        mProgressAngle = 360f - (progress / 100f) * 360f;
         invalidate();
     }
 }
