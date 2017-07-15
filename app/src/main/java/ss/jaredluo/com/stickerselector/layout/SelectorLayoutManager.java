@@ -12,6 +12,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
+import java.math.BigDecimal;
+
 import ss.jaredluo.com.stickerselector.model.Nearest;
 import ss.jaredluo.com.stickerselector.view.PlaceholderView;
 
@@ -20,6 +22,7 @@ import ss.jaredluo.com.stickerselector.view.PlaceholderView;
  */
 
 public class SelectorLayoutManager extends LinearLayoutManager {
+
 
     private float mMaxScale = 1.5f;
 
@@ -162,11 +165,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         //处理最后一个Item继续向右滑动的情况
         offset = dealLastItemOverScroll(v, offset);
 
-        Log.i("Jared", "vPosition: " + getPosition(v) + "  , negative offset:" + offset + " , mIsReverse: " + mIsReverse);
-
-        int distance = v.getLeft() + v.getWidth() / 2 + offset - recyclerCenter.x;
-        Log.i("Jared", "now position: " + getPosition(v) + ". distance is: " + distance + " , mIsReverse: " + mIsReverse);
-        return distance;
+        return v.getLeft() + v.getWidth() / 2 + offset - recyclerCenter.x;
     }
 
     private int dealLastItemOverScroll(View v, int offset) {
@@ -201,7 +200,6 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         int result = 0;
         if (mIsShowingUnSelected) {
             result = super.scrollHorizontallyBy(dx, recycler, state);
-            Log.i("Jared", "scrollHorizontallyBy: " + result + ", offset:" + computeHorizontalScrollOffset(state));
             applyItemTransformToChildren();
         }
         return result;
@@ -211,21 +209,18 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     public void onScrollStateChanged(int state) {
         super.onScrollStateChanged(state);
         if (state == RecyclerView.SCROLL_STATE_DRAGGING) {
-            Log.i("Jared", "SCROLL_STATE_DRAGGING");
         } else if (state == RecyclerView.SCROLL_STATE_IDLE) {
-            Log.i("Jared", "SCROLL_STATE_IDLE");
             onScrollIdle();
         } else if (state == RecyclerView.SCROLL_STATE_SETTLING) {
-            Log.i("Jared", "SCROLL_STATE_SETTLING");
         }
     }
 
     private void applyItemTransformToChildren() {
+        boolean hasSelection = false;
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
             if (!(child instanceof PlaceholderView)) {
                 float absDistance = Math.abs(getCenterRelativePositionOf(child));
-                Log.i("Jared", "Position is " + getPosition(child) + ", absDistance is: " + absDistance);
 
                 float scale = 1f;
                 float centerWidth = mChildMaxWidth / 2 + mChildStartWidth / 2;
@@ -235,31 +230,31 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                 }
                 if (mOnItemScaleChangeListener != null) {
                     int position = getPosition(child);
-                    Log.i("Jared", "Position: " + position + ", apply scale: " + scale + " , absDistance: " + absDistance);
                     mOnItemScaleChangeListener.onScale(position, scale);
                 }
-                if (scale == mMaxScale) {
+                BigDecimal roundScale = new BigDecimal(scale).setScale(1, BigDecimal.ROUND_HALF_UP);
+                if (roundScale.floatValue() == mMaxScale) {
                     if (mOnItemSelectedListener != null) {
                         int position = getPosition(child);
                         mOnItemSelectedListener.onSelected(position);
                     }
                 }
-//
-//                ViewGroup.LayoutParams layoutParam = child.getLayoutParams();
-//                layoutParam.width = (int) (layoutParam.width * scale);
-//                layoutParam.height = (int) (layoutParam.height * scale);
-//                child.setLayoutParams(layoutParam);
-//                child.getParent().requestLayout();
-//                child.setScaleX(scale);
-//                child.setScaleY(scale);
+                if (roundScale.floatValue() > 1f || child.getLeft() < recyclerCenter.x) {
+                    hasSelection = true;
+                }
 
+            }
+        }
+
+        if (!hasSelection) {
+            if (mOnItemSelectedListener != null) {
+                mOnItemSelectedListener.onNoSelection();
             }
         }
     }
 
     private void onScrollIdle() {
         Nearest nearest = getNearestScrollOffset();
-        Log.i("JARED", "Nearest position: " + nearest.getNearestPosition());
         scrollViewToCenter(nearest);
     }
 
@@ -294,7 +289,6 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             mIsReverse = false;
         }
         mCurrentPosition = nearest.getNearestPosition();
-        Log.i("Jared", "Current Position changed: " + mCurrentPosition + ", mIsReverse: " + mIsReverse);
         smoothScroller.setTargetPosition(mCurrentPosition);
         startSmoothScroll(smoothScroller);
     }
@@ -325,7 +319,6 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                 //回到起始位置
                 nearestOffset = (int) (-getStartRelativePositionOf(view));
             }
-            Log.i("Jared", "nearest Offset: " + nearestOffset);
             return nearestOffset;
         }
 
@@ -362,6 +355,8 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     public interface OnItemSelectedListener {
         void onSelected(int position);
+
+        void onNoSelection();
     }
 
 //    public void startExpandAnim(RecyclerView view, int expandPosition) {
