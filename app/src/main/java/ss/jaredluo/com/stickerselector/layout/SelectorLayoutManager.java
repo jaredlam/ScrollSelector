@@ -242,18 +242,10 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     private void applyItemTransformToChildren() {
         initScaleMap();
         boolean hasSelection = false;
-        float offset = 0f;
-        View firstDataChild = null;
-        View lastDataChild = null;
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
             if (!(child instanceof PlaceholderView)) {
 
-                if (firstDataChild == null) {
-                    firstDataChild = child;
-                }
-
-                lastDataChild = child;
 
                 float absDistance = Math.abs(getCenterRelativePositionOf(child));
 
@@ -265,7 +257,6 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                 }
                 int position = getPosition(child);
 
-                Log.i("JaredLuo", "position: " + position + " ," + " scale: " + scale);
 
                 child.setPivotX(child.getWidth() / 2f);
                 child.setPivotY(child.getHeight() / 2f);
@@ -273,43 +264,41 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                 child.setScaleY(scale);
                 float oldScale = mScaleMap.get(position);
 
-
-                if (scale > 1f) {
-                    float currentOffset = (scale - oldScale) * mChildStartWidth / 2;
-                    for (int x = 0; x < i; x++) {
-                        View preChild = getChildAt(x);
-                        if (!(preChild instanceof PlaceholderView)) {
-                            if (x == 0 && preChild.getTranslationX() == 0) {
-                                Log.i("PRE", "i: " + i + " ,position: " + getPosition(preChild) + ", mFirstChildTranslationX: " + mFirstChildTranslationX);
-                                preChild.setTranslationX(mFirstChildTranslationX);
+                if (scale - oldScale > 0.01f) {
+                    float offset = (scale - oldScale) * mChildStartWidth / 2;
+                    float relativeToCenter = getCenterRelativePositionOf(child);
+                    if (relativeToCenter > 0) {
+                        if (i > 0) {
+                            View lastChild = getChildAt(i - 1);
+                            if (!(lastChild instanceof PlaceholderView)) {
+                                lastChild.setTranslationX(lastChild.getTranslationX() - offset);
+                                Log.i("lastChild", "translate:" + lastChild.getTranslationX());
                             }
-
-                            preChild.setTranslationX(preChild.getTranslationX() - currentOffset);
-                            Log.i("PRETRANS", " preChild.setTranslationX: " + preChild.getTranslationX() + " ,position: " + getPosition(preChild) + " ,currentOffset: " + currentOffset);
                         }
-                    }
-
-
-                    for (int j = i + 1; j < getChildCount(); j++) {
-                        View postChild = getChildAt(j);
-                        if (!(postChild instanceof PlaceholderView)) {
-
-                            if (j == getChildCount() - 1 && postChild.getTranslationX() == 0) {
-                                postChild.setTranslationX(mLastChildTranslationX);
+                        child.setTranslationX(child.getTranslationX() - offset);
+                    } else {
+                        if (getChildCount() > i + 1) {
+                            View nextChild = getChildAt(i + 1);
+                            if (!(nextChild instanceof PlaceholderView)) {
+                                nextChild.setTranslationX(nextChild.getTranslationX() + offset);
                             }
-                            postChild.setTranslationX(postChild.getTranslationX() + currentOffset);
-                            Log.i("POST", "position: " + getPosition(postChild) + ", getTranslationX is 0 ");
+                        }
+                        child.setTranslationX(child.getTranslationX() + offset);
+
+                        View firstChild = getChildAt(0);
+                        if (!(firstChild instanceof PlaceholderView) && firstChild.getTranslationX() == 0) {
+                            float fullOffset = (mMaxScale - 1f) * mChildStartWidth;
+                            firstChild.setTranslationX(-fullOffset);
                         }
                     }
                 }
 
-
                 mScaleMap.put(position, scale);
+
 
                 BigDecimal roundScale = new BigDecimal(scale).setScale(1, BigDecimal.ROUND_HALF_UP);
                 if (roundScale.floatValue() == mMaxScale) {
                     if (mCurrentPosition != position) {
-                        Log.i("Selection", "translate:" + child.getTranslationX());
                         if (mOnItemSelectedListener != null) {
                             postSelectionMsg(position);
                         }
@@ -320,13 +309,6 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                 }
 
             }
-        }
-
-        if (firstDataChild != null) {
-            mFirstChildTranslationX = firstDataChild.getTranslationX();
-        }
-        if (lastDataChild != null) {
-            mLastChildTranslationX = lastDataChild.getTranslationX();
         }
 
 //        if (mOnItemScaleChangeListener != null) {
