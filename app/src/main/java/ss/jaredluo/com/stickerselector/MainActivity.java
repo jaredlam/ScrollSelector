@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
         mLayoutManager.setMarginToCenter(ScreenUtils.convertDpToPx(20));
         mRecyclerView.setLayoutManager(mLayoutManager);
         List<String> data = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 1000; i++) {
             data.add(i + "");
         }
         mAdapter = new MainAdapter(data, mLayoutManager);

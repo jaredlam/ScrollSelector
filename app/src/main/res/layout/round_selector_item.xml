@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ss.jaredluo.com.stickerselector.view.CircleSelectorSelector xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="50dp"
-    android:layout_height="50dp"
-    android:src="@drawable/nerd_face" />
+    android:layout_height="50dp">
+
+    <ss.jaredluo.com.stickerselector.view.CircleSelectorSelector
+        android:id="@+id/circle_selector"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/nerd_face" />
+
+    <TextView
+        android:id="@+id/position"
+        android:text="1"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+</FrameLayout>

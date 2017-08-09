@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
+import ss.jaredluo.com.stickerselector.R;
 import ss.jaredluo.com.stickerselector.layout.SelectorLayoutManager;
 import ss.jaredluo.com.stickerselector.utils.ScreenUtils;
 import ss.jaredluo.com.stickerselector.view.PlaceholderView;
@@ -29,7 +30,7 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
 
     private final List<T> mData;
     private final SelectorLayoutManager mLayoutManager;
-    private final SparseArray<Float> mScaleMap;
+    private SparseArray<Float> mScaleMap;
     private int mDataItemWidth;
     private int mDataItemHeight;
     private int mFullHeight;
@@ -43,16 +44,17 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
         }
         mLayoutManager.setOnItemScaleChangeListener(new SelectorLayoutManager.OnItemScaleChangeListener() {
             @Override
-            public void onScale(int position, float scale) {
-                mScaleMap.put(position, scale);
+            public void onScale(SparseArray<Float> scaleMap) {
+                mScaleMap = scaleMap;
 
                 new Handler().post(new Runnable() {
                     @Override
                     public void run() {
-                        notifyDataSetChanged();
+//                        notifyDataSetChanged();
                     }
                 });
             }
+
         });
     }
 
@@ -82,6 +84,11 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
             view.setLayoutParams(new ViewGroup.LayoutParams((int) (width / 2 + mDataItemWidth * mLayoutManager.getMaxScale() / 2 + mLayoutManager.getMarginToCenter()), 1));
             return new ViewHolderPlaceHolder(view);
         } else {
+            RecyclerView.LayoutParams layoutParams = (RecyclerView.LayoutParams) dataView.getLayoutParams();
+            int margin = (mFullHeight - layoutParams.height) / 2;
+            layoutParams.topMargin = margin;
+            layoutParams.bottomMargin = margin;
+            dataView.setLayoutParams(layoutParams);
             return createViewHolder(dataView);
         }
 
@@ -92,14 +99,7 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
         if (holder != null) {
             int type = getItemViewType(position);
             if (type == ITEM_TYPE_DATA) {
-                float scale = mScaleMap.get(position, 1f);
-                RecyclerView.LayoutParams layoutParams = (RecyclerView.LayoutParams) holder.itemView.getLayoutParams();
-                layoutParams.width = (int) (mDataItemWidth * scale);
-                layoutParams.height = (int) (mDataItemHeight * scale);
-                int margin = (mFullHeight - layoutParams.height) / 2;
-                layoutParams.topMargin = margin;
-                layoutParams.bottomMargin = margin;
-                holder.itemView.setLayoutParams(layoutParams);
+                holder.itemView.setTranslationX(0);
                 onBindData((VH) holder, position);
             }
         }

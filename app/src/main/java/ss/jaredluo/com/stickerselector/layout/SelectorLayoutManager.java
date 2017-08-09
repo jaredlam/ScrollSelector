@@ -1,17 +1,22 @@
 package ss.jaredluo.com.stickerselector.layout;
 
 import android.content.Context;
+import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
+import java.lang.ref.WeakReference;
 import java.math.BigDecimal;
 
 import ss.jaredluo.com.stickerselector.model.Nearest;
@@ -21,8 +26,11 @@ import ss.jaredluo.com.stickerselector.view.PlaceholderView;
  * Created by admin on 2017/7/6.
  */
 
+
 public class SelectorLayoutManager extends LinearLayoutManager {
 
+    private static final int MSG_ON_SELECTION = 0x01;
+    private static final int NO_SELECTION = -1;
 
     private float mMaxScale = 1.5f;
 
@@ -37,9 +45,15 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     private int mChildStartWidth;
     private boolean isLayout;
     private boolean mIsReverse;
-    private int mCurrentPosition;
+    private int mTargetPosition;
+    private int mCurrentPosition = NO_SELECTION;
     private boolean mIsShowingUnSelected = true;
     private ViewTreeObserver.OnGlobalLayoutListener mGlobalListener;
+    private SelectionEventHandler mHandler;
+
+    private SparseArray<Float> mScaleMap;
+    private float mLastChildTranslationX;
+    private float mFirstChildTranslationX;
 
     public SelectorLayoutManager(Context context) {
         super(context);
@@ -157,15 +171,15 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     private float getCenterRelativePositionOf(View v) {
-        int offset = (mChildMaxWidth - v.getWidth()) / 2;
-        if (!mIsReverse && getPosition(v) != 1) {
-            offset = -offset;
-        }
+//        int offset = (mChildMaxWidth - v.getWidth()) / 2;
+//        if (!mIsReverse && getPosition(v) != 1) {
+//            offset = -offset;
+//        }
+//
+//        //处理最后一个Item继续向右滑动的情况
+//        offset = dealLastItemOverScroll(v, offset);
 
-        //处理最后一个Item继续向右滑动的情况
-        offset = dealLastItemOverScroll(v, offset);
-
-        return v.getLeft() + v.getWidth() / 2 + offset - recyclerCenter.x;
+        return v.getLeft() + v.getTranslationX() + v.getWidth() / 2 - recyclerCenter.x;
     }
 
     private int dealLastItemOverScroll(View v, int offset) {
@@ -215,11 +229,32 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         }
     }
 
+
+    private void initScaleMap() {
+        if (mScaleMap == null || mScaleMap.size() == 0) {
+            mScaleMap = new SparseArray<>();
+            for (int i = 1; i <= getItemCount() - 2; i++) {
+                mScaleMap.put(i, 1.0f);
+            }
+        }
+    }
+
     private void applyItemTransformToChildren() {
+        initScaleMap();
         boolean hasSelection = false;
+        float offset = 0f;
+        View firstDataChild = null;
+        View lastDataChild = null;
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
             if (!(child instanceof PlaceholderView)) {
+
+                if (firstDataChild == null) {
+                    firstDataChild = child;
+                }
+
+                lastDataChild = child;
+
                 float absDistance = Math.abs(getCenterRelativePositionOf(child));
 
                 float scale = 1f;
@@ -228,15 +263,56 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                     float closeFactorToCenter = 1 - absDistance / centerWidth;
                     scale += (mMaxScale - 1f) * closeFactorToCenter;
                 }
-                if (mOnItemScaleChangeListener != null) {
-                    int position = getPosition(child);
-                    mOnItemScaleChangeListener.onScale(position, scale);
+                int position = getPosition(child);
+
+                Log.i("JaredLuo", "position: " + position + " ," + " scale: " + scale);
+
+                child.setPivotX(child.getWidth() / 2f);
+                child.setPivotY(child.getHeight() / 2f);
+                child.setScaleX(scale);
+                child.setScaleY(scale);
+                float oldScale = mScaleMap.get(position);
+
+
+                if (scale > 1f) {
+                    float currentOffset = (scale - oldScale) * mChildStartWidth / 2;
+                    for (int x = 0; x < i; x++) {
+                        View preChild = getChildAt(x);
+                        if (!(preChild instanceof PlaceholderView)) {
+                            if (x == 0 && preChild.getTranslationX() == 0) {
+                                Log.i("PRE", "i: " + i + " ,position: " + getPosition(preChild) + ", mFirstChildTranslationX: " + mFirstChildTranslationX);
+                                preChild.setTranslationX(mFirstChildTranslationX);
+                            }
+
+                            preChild.setTranslationX(preChild.getTranslationX() - currentOffset);
+                            Log.i("PRETRANS", " preChild.setTranslationX: " + preChild.getTranslationX() + " ,position: " + getPosition(preChild) + " ,currentOffset: " + currentOffset);
+                        }
+                    }
+
+
+                    for (int j = i + 1; j < getChildCount(); j++) {
+                        View postChild = getChildAt(j);
+                        if (!(postChild instanceof PlaceholderView)) {
+
+                            if (j == getChildCount() - 1 && postChild.getTranslationX() == 0) {
+                                postChild.setTranslationX(mLastChildTranslationX);
+                            }
+                            postChild.setTranslationX(postChild.getTranslationX() + currentOffset);
+                            Log.i("POST", "position: " + getPosition(postChild) + ", getTranslationX is 0 ");
+                        }
+                    }
                 }
+
+
+                mScaleMap.put(position, scale);
+
                 BigDecimal roundScale = new BigDecimal(scale).setScale(1, BigDecimal.ROUND_HALF_UP);
                 if (roundScale.floatValue() == mMaxScale) {
-                    if (mOnItemSelectedListener != null) {
-                        int position = getPosition(child);
-                        mOnItemSelectedListener.onSelected(position);
+                    if (mCurrentPosition != position) {
+                        Log.i("Selection", "translate:" + child.getTranslationX());
+                        if (mOnItemSelectedListener != null) {
+                            postSelectionMsg(position);
+                        }
                     }
                 }
                 if (roundScale.floatValue() > 1f || child.getLeft() < recyclerCenter.x) {
@@ -246,10 +322,30 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             }
         }
 
-        if (!hasSelection) {
-            if (mOnItemSelectedListener != null) {
-                mOnItemSelectedListener.onNoSelection();
-            }
+        if (firstDataChild != null) {
+            mFirstChildTranslationX = firstDataChild.getTranslationX();
+        }
+        if (lastDataChild != null) {
+            mLastChildTranslationX = lastDataChild.getTranslationX();
+        }
+
+//        if (mOnItemScaleChangeListener != null) {
+//            mOnItemScaleChangeListener.onScale(mScaleMap);
+//        }
+
+        if (!hasSelection && mCurrentPosition != NO_SELECTION) {
+            postSelectionMsg(NO_SELECTION);
+        }
+    }
+
+    private void postSelectionMsg(int position) {
+        mCurrentPosition = position;
+        if (mHandler != null) {
+            Message msg = new Message();
+            msg.what = MSG_ON_SELECTION;
+            msg.arg1 = position;
+            mHandler.removeMessages(msg.what);
+            mHandler.sendMessageDelayed(msg, 300);
         }
     }
 
@@ -283,13 +379,13 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     private void scrollViewToCenter(final Nearest nearest) {
         SelectorLinearSmoothScroller smoothScroller = new SelectorLinearSmoothScroller(mContext);
-        if (mCurrentPosition > nearest.getNearestPosition()) {
+        if (mTargetPosition > nearest.getNearestPosition()) {
             mIsReverse = true;
-        } else if (mCurrentPosition < nearest.getNearestPosition()) {
+        } else if (mTargetPosition < nearest.getNearestPosition()) {
             mIsReverse = false;
         }
-        mCurrentPosition = nearest.getNearestPosition();
-        smoothScroller.setTargetPosition(mCurrentPosition);
+        mTargetPosition = nearest.getNearestPosition();
+        smoothScroller.setTargetPosition(mTargetPosition);
         startSmoothScroll(smoothScroller);
     }
 
@@ -300,8 +396,8 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         }
     }
 
-    public int getCurrentPosition() {
-        return mCurrentPosition;
+    public int getTargetPosition() {
+        return mTargetPosition;
     }
 
     private class SelectorLinearSmoothScroller extends LinearSmoothScroller {
@@ -313,7 +409,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         @Override
         public int calculateDxToMakeVisible(View view, int snapPreference) {
             int nearestOffset;
-            if (mCurrentPosition != 0) {
+            if (mTargetPosition != 0) {
                 nearestOffset = (int) (-getCenterRelativePositionOf(view));
             } else {
                 //回到起始位置
@@ -346,11 +442,12 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     public interface OnItemScaleChangeListener {
-        void onScale(int position, float scale);
+        void onScale(SparseArray<Float> scaleMap);
     }
 
     public void setOnItemSelectedListener(OnItemSelectedListener onItemSelectedListener) {
         this.mOnItemSelectedListener = onItemSelectedListener;
+        mHandler = new SelectionEventHandler(mOnItemSelectedListener);
     }
 
     public interface OnItemSelectedListener {
@@ -359,49 +456,28 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         void onNoSelection();
     }
 
-//    public void startExpandAnim(RecyclerView view, int expandPosition) {
-//        LinearLayoutManager layoutManager = (LinearLayoutManager) view.getLayoutManager();
-//        final int firstVisible = layoutManager.findFirstVisibleItemPosition();
-//        final int lastVisible = layoutManager.findLastVisibleItemPosition();
-//        if (firstVisible == -1 || lastVisible == -1) {
-//            return;
-//        }
-//        for (int i = firstVisible; i <= lastVisible; i++) {
-//            final View child = layoutManager.findViewByPosition(i);
-//            //final int startPosition = expandPosition - child.getWidth() * i;
-//            final int startPosition = expandPosition - child.getLeft();
-//
-//            ScaleAnimation scale = new ScaleAnimation(.5f, 1f, 1f, 1f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-//            TranslateAnimation keepTransPosition = new TranslateAnimation(startPosition, startPosition, 0, 0);
-//            AnimationSet set = new AnimationSet(true);
-//            set.setInterpolator(new AccelerateInterpolator());
-//            set.setDuration(1000);
-//            set.addAnimation(scale);
-//            set.addAnimation(keepTransPosition);
-//            child.startAnimation(set);
-//
-//
-//            set.setAnimationListener(new Animation.AnimationListener() {
-//                @Override
-//                public void onAnimationStart(Animation animation) {
-//
-//                }
-//
-//                @Override
-//                public void onAnimationEnd(Animation animation) {
-//                    TranslateAnimation anim = new TranslateAnimation(startPosition, 0, 0, 0);
-//                    anim.setDuration(1000);
-//                    anim.setInterpolator(new OvershootInterpolator());
-//                    child.startAnimation(anim);
-//                }
-//
-//                @Override
-//                public void onAnimationRepeat(Animation animation) {
-//
-//                }
-//            });
-//
-//        }
-//    }
+    private static class SelectionEventHandler extends Handler {
 
+        private final WeakReference<OnItemSelectedListener> mListener;
+
+        SelectionEventHandler(OnItemSelectedListener listener) {
+            mListener = new WeakReference<>(listener);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == MSG_ON_SELECTION) {
+                OnItemSelectedListener listener = mListener.get();
+                if (listener != null) {
+                    int position = msg.arg1;
+                    if (position == NO_SELECTION) {
+                        listener.onNoSelection();
+                    } else {
+                        listener.onSelected(position);
+                    }
+                }
+            }
+        }
+    }
 }
