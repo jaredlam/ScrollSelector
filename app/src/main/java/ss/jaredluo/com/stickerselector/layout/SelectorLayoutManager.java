@@ -264,18 +264,20 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                 child.setScaleY(scale);
                 float oldScale = mScaleMap.get(position);
 
-                if (scale - oldScale > 0.01f) {
+                if (scale > oldScale) {
                     float offset = (scale - oldScale) * mChildStartWidth / 2;
+                    Log.i("scale", "scale: " + scale + ", oldScale: " + oldScale + ", scale: " + scale + ", offset: " + offset);
                     float relativeToCenter = getCenterRelativePositionOf(child);
                     if (relativeToCenter > 0) {
                         if (i > 0) {
                             View lastChild = getChildAt(i - 1);
                             if (!(lastChild instanceof PlaceholderView)) {
                                 lastChild.setTranslationX(lastChild.getTranslationX() - offset);
-                                Log.i("lastChild", "translate:" + lastChild.getTranslationX());
+
                             }
                         }
                         child.setTranslationX(child.getTranslationX() - offset);
+                        Log.i("scale", "translateX:" + child.getTranslationX());
                     } else {
                         if (getChildCount() > i + 1) {
                             View nextChild = getChildAt(i + 1);
@@ -285,10 +287,12 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                         }
                         child.setTranslationX(child.getTranslationX() + offset);
 
-                        View firstChild = getChildAt(0);
-                        if (!(firstChild instanceof PlaceholderView) && firstChild.getTranslationX() == 0) {
-                            float fullOffset = (mMaxScale - 1f) * mChildStartWidth;
-                            firstChild.setTranslationX(-fullOffset);
+                        if (i != 0) {
+                            View firstChild = getChildAt(0);
+                            if (!(firstChild instanceof PlaceholderView) && firstChild.getTranslationX() == 0) {
+                                float fullOffset = (mMaxScale - 1f) * mChildStartWidth;
+                                firstChild.setTranslationX(-fullOffset);
+                            }
                         }
                     }
                 }
