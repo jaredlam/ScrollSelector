@@ -171,7 +171,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     private float getCenterRelativePositionOf(View v) {
-//        int offset = (mChildMaxWidth - v.getWidth()) / 2;
+        float offset = (mChildMaxWidth - v.getMeasuredWidth()) / 2f;
 //        if (!mIsReverse && getPosition(v) != 1) {
 //            offset = -offset;
 //        }
@@ -179,7 +179,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 //        //处理最后一个Item继续向右滑动的情况
 //        offset = dealLastItemOverScroll(v, offset);
 
-        return v.getLeft() + v.getTranslationX() + v.getWidth() / 2f - recyclerCenter.x;
+        return v.getLeft() + v.getWidth() / 2f - offset - recyclerCenter.x;
     }
 
     private int dealLastItemOverScroll(View v, int offset) {
