@@ -179,7 +179,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 //        //处理最后一个Item继续向右滑动的情况
 //        offset = dealLastItemOverScroll(v, offset);
 
-        return v.getLeft() + v.getTranslationX() + v.getWidth() / 2 - recyclerCenter.x;
+        return v.getLeft() + v.getTranslationX() + v.getWidth() / 2f - recyclerCenter.x;
     }
 
     private int dealLastItemOverScroll(View v, int offset) {
@@ -239,66 +239,61 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         }
     }
 
+    private float getScale(View child) {
+
+        float absDistance = Math.abs(getCenterRelativePositionOf(child));
+        float scale = 1f;
+        float centerWidth = mChildMaxWidth / 2 + mChildStartWidth / 2;
+        if (absDistance <= centerWidth) {
+            float closeFactorToCenter = 1 - absDistance / centerWidth;
+            scale += (mMaxScale - 1f) * closeFactorToCenter;
+        }
+
+        return scale;
+    }
+
     private void applyItemTransformToChildren() {
         initScaleMap();
         boolean hasSelection = false;
+        float fullOffset = (mMaxScale - 1f) * mChildStartWidth;
+
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
             if (!(child instanceof PlaceholderView)) {
 
+                float scale = getScale(child);
 
-                float absDistance = Math.abs(getCenterRelativePositionOf(child));
-
-                float scale = 1f;
-                float centerWidth = mChildMaxWidth / 2 + mChildStartWidth / 2;
-                if (absDistance <= centerWidth) {
-                    float closeFactorToCenter = 1 - absDistance / centerWidth;
-                    scale += (mMaxScale - 1f) * closeFactorToCenter;
-                }
                 int position = getPosition(child);
-
 
                 child.setPivotX(child.getWidth() / 2f);
                 child.setPivotY(child.getHeight() / 2f);
                 child.setScaleX(scale);
                 child.setScaleY(scale);
-                float oldScale = mScaleMap.get(position);
 
-                if (scale > oldScale) {
-                    float offset = (scale - oldScale) * mChildStartWidth / 2;
-                    Log.i("scale", "scale: " + scale + ", oldScale: " + oldScale + ", scale: " + scale + ", offset: " + offset);
-                    float relativeToCenter = getCenterRelativePositionOf(child);
-                    if (relativeToCenter > 0) {
-                        if (i > 0) {
-                            View lastChild = getChildAt(i - 1);
-                            if (!(lastChild instanceof PlaceholderView)) {
-                                lastChild.setTranslationX(lastChild.getTranslationX() - offset);
+                float offset = (scale - 1f) * (mChildStartWidth / 2f);
+                float targetTrans = -offset;
+                if (targetTrans > 0) {
+                    targetTrans = 0;
+                }
 
-                            }
-                        }
-                        child.setTranslationX(child.getTranslationX() - offset);
-                        Log.i("scale", "translateX:" + child.getTranslationX());
-                    } else {
-                        if (getChildCount() > i + 1) {
-                            View nextChild = getChildAt(i + 1);
-                            if (!(nextChild instanceof PlaceholderView)) {
-                                nextChild.setTranslationX(nextChild.getTranslationX() + offset);
-                            }
-                        }
-                        child.setTranslationX(child.getTranslationX() + offset);
+                Log.i("Jared", "position: " + getPosition(child) + ", targetTrans:" + targetTrans);
+                child.setTranslationX(targetTrans);
 
-                        if (i != 0) {
-                            View firstChild = getChildAt(0);
-                            if (!(firstChild instanceof PlaceholderView) && firstChild.getTranslationX() == 0) {
-                                float fullOffset = (mMaxScale - 1f) * mChildStartWidth;
-                                firstChild.setTranslationX(-fullOffset);
+                if (child.getTranslationX() < 0) {
+                    for (int j = 0; j < i; j++) {
+                        View preChild = getChildAt(j);
+                        if (!(preChild instanceof PlaceholderView)) {
+                            float preTargetTrans = preChild.getTranslationX() - offset * 2;
+                            if (preTargetTrans < -fullOffset) {
+                                preTargetTrans = -fullOffset;
                             }
+                            preChild.setTranslationX(preTargetTrans);
+                            Log.i("Jared", "position: " + getPosition(preChild) + ", targetTrans:" + preTargetTrans + ", pre");
                         }
                     }
                 }
 
                 mScaleMap.put(position, scale);
-
 
                 BigDecimal roundScale = new BigDecimal(scale).setScale(1, BigDecimal.ROUND_HALF_UP);
                 if (roundScale.floatValue() == mMaxScale) {

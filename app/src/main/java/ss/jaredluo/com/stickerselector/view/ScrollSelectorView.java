@@ -50,4 +50,9 @@ public class ScrollSelectorView extends RecyclerView {
         super.scrollBy(x, y);
     }
 
+    @Override
+    public boolean fling(int velocityX, int velocityY) {
+        velocityX *= 0.4;
+        return super.fling(velocityX, velocityY);
+    }
 }
