@@ -176,7 +176,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
         float scaledWidth = v.getWidth() * v.getScaleX();
         float offset = (mChildMaxWidth - scaledWidth) / 2f;
-        float afterTransCenter = v.getLeft() - (scaledWidth - v.getMeasuredWidth()) + scaledWidth / 2;
+        float afterTransCenter = v.getLeft() - Math.abs(v.getTranslationX() * 2) + scaledWidth / 2;
         float result = afterTransCenter - offset - recyclerCenter.x;
         Log.i("JaredTest", "position:" + getPosition(v) + "offset result:" + result);
         return result;
@@ -185,7 +185,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     private float getCenterRelativeRealDistanceOf(View v) {
 
         float scaledWidth = v.getWidth() * v.getScaleX();
-        float afterTransCenter = v.getLeft() - (scaledWidth - v.getMeasuredWidth()) + scaledWidth / 2;
+        float afterTransCenter = v.getLeft() - Math.abs(v.getTranslationX() * 2) + scaledWidth / 2;
         return afterTransCenter - recyclerCenter.x;
     }
 

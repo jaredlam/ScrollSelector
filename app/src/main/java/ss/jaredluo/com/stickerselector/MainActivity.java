@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView = (ScrollSelectorView) findViewById(R.id.recycler_view);
         mRecyclerView.setSpace((int) ScreenUtils.convertDpToPx(10));
         mLayoutManager = new SelectorLayoutManager(this, LinearLayoutManager.HORIZONTAL, false, mRecyclerView);
-        mLayoutManager.setMaxScale(1.5f);
+        mLayoutManager.setMaxScale(1.9f);
         mLayoutManager.setMarginToCenter(ScreenUtils.convertDpToPx(20));
         mRecyclerView.setLayoutManager(mLayoutManager);
         List<String> data = new ArrayList<>();
