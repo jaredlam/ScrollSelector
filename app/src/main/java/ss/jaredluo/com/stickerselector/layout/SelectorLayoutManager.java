@@ -1,7 +1,6 @@
 package ss.jaredluo.com.stickerselector.layout;
 
 import android.content.Context;
-import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.os.Handler;
@@ -31,12 +30,12 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     private static final int MSG_ON_SELECTION = 0x01;
     private static final int NO_SELECTION = -1;
+    private static final int NO_CANCELED_SELECTION = -2;
 
     private float mMaxScale = 1.5f;
 
     private float mMarginToCenter = 100;
 
-    private OnItemScaleChangeListener mOnItemScaleChangeListener;
     private OnItemSelectedListener mOnItemSelectedListener;
 
     private Point recyclerCenter = new Point();
@@ -52,8 +51,10 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     private SelectionEventHandler mHandler;
 
     private SparseArray<Float> mScaleMap;
+    private RecyclerView mRecyclerView;
     private float mLastChildTranslationX;
     private float mFirstChildTranslationX;
+    private int mCanceledPosition = -1;
 
     public SelectorLayoutManager(Context context) {
         super(context);
@@ -61,9 +62,10 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         init();
     }
 
-    public SelectorLayoutManager(Context context, int orientation, boolean reverseLayout) {
+    public SelectorLayoutManager(Context context, int orientation, boolean reverseLayout, RecyclerView recyclerView) {
         super(context, orientation, reverseLayout);
         this.mContext = context;
+        this.mRecyclerView = recyclerView;
         init();
     }
 
@@ -170,16 +172,21 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         recyclerCenter.set(getWidth() / 2, getHeight() / 2);
     }
 
-    private float getCenterRelativePositionOf(View v) {
-        float offset = (mChildMaxWidth - v.getMeasuredWidth()) / 2f;
-//        if (!mIsReverse && getPosition(v) != 1) {
-//            offset = -offset;
-//        }
-//
-//        //处理最后一个Item继续向右滑动的情况
-//        offset = dealLastItemOverScroll(v, offset);
+    private float getCenterRelativeDistanceOf(View v) {
 
-        return v.getLeft() + v.getWidth() / 2f - offset - recyclerCenter.x;
+        float scaledWidth = v.getWidth() * v.getScaleX();
+        float offset = (mChildMaxWidth - scaledWidth) / 2f;
+        float afterTransCenter = v.getLeft() - (scaledWidth - v.getMeasuredWidth()) + scaledWidth / 2;
+        float result = afterTransCenter - offset - recyclerCenter.x;
+        Log.i("JaredTest", "position:" + getPosition(v) + "offset result:" + result);
+        return result;
+    }
+
+    private float getCenterRelativeRealDistanceOf(View v) {
+
+        float scaledWidth = v.getWidth() * v.getScaleX();
+        float afterTransCenter = v.getLeft() - (scaledWidth - v.getMeasuredWidth()) + scaledWidth / 2;
+        return afterTransCenter - recyclerCenter.x;
     }
 
     private int dealLastItemOverScroll(View v, int offset) {
@@ -241,7 +248,8 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     private float getScale(View child) {
 
-        float absDistance = Math.abs(getCenterRelativePositionOf(child));
+//        float absDistance = Math.abs(getCenterRelativeDistanceOf(child));
+        float absDistance = Math.abs(getCenterRelativeRealDistanceOf(child));
         float scale = 1f;
         float centerWidth = mChildMaxWidth / 2 + mChildStartWidth / 2;
         if (absDistance <= centerWidth) {
@@ -252,8 +260,14 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         return scale;
     }
 
-    private void applyItemTransformToChildren() {
+    @Override
+    public void onAdapterChanged(RecyclerView.Adapter oldAdapter, RecyclerView.Adapter newAdapter) {
+        super.onAdapterChanged(oldAdapter, newAdapter);
         initScaleMap();
+    }
+
+    private void applyItemTransformToChildren() {
+
         boolean hasSelection = false;
         float fullOffset = (mMaxScale - 1f) * mChildStartWidth;
 
@@ -265,18 +279,20 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
                 int position = getPosition(child);
 
+                Log.i("JARED", "position:" + position + ", scale:" + scale);
+
                 child.setPivotX(child.getWidth() / 2f);
                 child.setPivotY(child.getHeight() / 2f);
                 child.setScaleX(scale);
                 child.setScaleY(scale);
 
-                float offset = (scale - 1f) * (mChildStartWidth / 2f);
+                float offset = (scale * mChildStartWidth - mChildStartWidth) / 2;
+                Log.i("JaredLuo", "position:" + position + ", offset:" + offset);
                 float targetTrans = -offset;
                 if (targetTrans > 0) {
                     targetTrans = 0;
                 }
 
-                Log.i("Jared", "position: " + getPosition(child) + ", targetTrans:" + targetTrans);
                 child.setTranslationX(targetTrans);
 
                 if (child.getTranslationX() < 0) {
@@ -288,21 +304,22 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                                 preTargetTrans = -fullOffset;
                             }
                             preChild.setTranslationX(preTargetTrans);
-                            Log.i("Jared", "position: " + getPosition(preChild) + ", targetTrans:" + preTargetTrans + ", pre");
                         }
+                    }
+                }
+
+
+                if (mCurrentPosition == position && mCanceledPosition != position) {
+                    mCanceledPosition = position;
+                    if (mOnItemSelectedListener != null) {
+                        mOnItemSelectedListener.onCancelSelection(mCanceledPosition);
                     }
                 }
 
                 mScaleMap.put(position, scale);
 
                 BigDecimal roundScale = new BigDecimal(scale).setScale(1, BigDecimal.ROUND_HALF_UP);
-                if (roundScale.floatValue() == mMaxScale) {
-                    if (mCurrentPosition != position) {
-                        if (mOnItemSelectedListener != null) {
-                            postSelectionMsg(position);
-                        }
-                    }
-                }
+
                 if (roundScale.floatValue() > 1f || child.getLeft() < recyclerCenter.x) {
                     hasSelection = true;
                 }
@@ -310,17 +327,22 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             }
         }
 
-//        if (mOnItemScaleChangeListener != null) {
-//            mOnItemScaleChangeListener.onScale(mScaleMap);
-//        }
-
         if (!hasSelection && mCurrentPosition != NO_SELECTION) {
             postSelectionMsg(NO_SELECTION);
         }
     }
 
+    private void select(int position) {
+        if (mCurrentPosition != position) {
+            if (mOnItemSelectedListener != null) {
+                postSelectionMsg(position);
+            }
+        }
+    }
+
     private void postSelectionMsg(int position) {
         mCurrentPosition = position;
+        mCanceledPosition = NO_CANCELED_SELECTION;
         if (mHandler != null) {
             Message msg = new Message();
             msg.what = MSG_ON_SELECTION;
@@ -328,6 +350,10 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             mHandler.removeMessages(msg.what);
             mHandler.sendMessageDelayed(msg, 300);
         }
+    }
+
+    public SparseArray<Float> getScaleMap() {
+        return mScaleMap;
     }
 
     private void onScrollIdle() {
@@ -341,7 +367,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
             if (!(child instanceof PlaceholderView)) {
-                float distance = getCenterRelativePositionOf(child);
+                float distance = getCenterRelativeDistanceOf(child);
                 float absDistance = Math.abs(distance);
                 if (absDistance < shortestDistance) {
                     shortestDistance = absDistance;
@@ -375,6 +401,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         if (!(child instanceof PlaceholderView)) {
             scrollViewToCenter(new Nearest(position));
         }
+
     }
 
     public int getTargetPosition() {
@@ -391,7 +418,10 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         public int calculateDxToMakeVisible(View view, int snapPreference) {
             int nearestOffset;
             if (mTargetPosition != 0) {
-                nearestOffset = (int) (-getCenterRelativePositionOf(view));
+                nearestOffset = (int) (-getCenterRelativeDistanceOf(view));
+                if (nearestOffset == 0) {
+                    select(getPosition(view));
+                }
             } else {
                 //回到起始位置
                 nearestOffset = (int) (-getStartRelativePositionOf(view));
@@ -418,14 +448,6 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         }
     }
 
-    public void setOnItemScaleChangeListener(OnItemScaleChangeListener onItemScaleChangeListener) {
-        this.mOnItemScaleChangeListener = onItemScaleChangeListener;
-    }
-
-    public interface OnItemScaleChangeListener {
-        void onScale(SparseArray<Float> scaleMap);
-    }
-
     public void setOnItemSelectedListener(OnItemSelectedListener onItemSelectedListener) {
         this.mOnItemSelectedListener = onItemSelectedListener;
         mHandler = new SelectionEventHandler(mOnItemSelectedListener);
@@ -435,6 +457,8 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         void onSelected(int position);
 
         void onNoSelection();
+
+        void onCancelSelection(int position);
     }
 
     private static class SelectionEventHandler extends Handler {
@@ -461,4 +485,5 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             }
         }
     }
+
 }

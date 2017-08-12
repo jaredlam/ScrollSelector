@@ -30,7 +30,6 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
 
     private final List<T> mData;
     private final SelectorLayoutManager mLayoutManager;
-    private SparseArray<Float> mScaleMap;
     private int mDataItemWidth;
     private int mDataItemHeight;
     private int mFullHeight;
@@ -38,24 +37,7 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
     public ScrollSelectorAdapter(List<T> data, SelectorLayoutManager layoutManager) {
         mData = data;
         mLayoutManager = layoutManager;
-        mScaleMap = new SparseArray<>();
-        for (int i = 0; i < mData.size(); i++) {
-            mScaleMap.put(i, 1.0f);
-        }
-        mLayoutManager.setOnItemScaleChangeListener(new SelectorLayoutManager.OnItemScaleChangeListener() {
-            @Override
-            public void onScale(SparseArray<Float> scaleMap) {
-                mScaleMap = scaleMap;
 
-                new Handler().post(new Runnable() {
-                    @Override
-                    public void run() {
-//                        notifyDataSetChanged();
-                    }
-                });
-            }
-
-        });
     }
 
     public SelectorLayoutManager getLayoutManager() {
@@ -106,7 +88,7 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
     }
 
     public boolean isCurrentPosition(int position) {
-        float currentScale = mScaleMap.get(position, 1f);
+        float currentScale = mLayoutManager.getScaleMap().get(position, 1f);
         BigDecimal bd = new BigDecimal(currentScale);
         currentScale = bd.setScale(1, RoundingMode.HALF_UP).floatValue();
         return currentScale == getLayoutManager().getMaxScale();
