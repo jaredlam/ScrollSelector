@@ -112,6 +112,9 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     public void setMaxScale(float maxScale) {
+        if (maxScale < 1.0f){
+            maxScale = 1.0f;
+        }
         mMaxScale = maxScale;
     }
 
@@ -176,9 +179,18 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
         float scaledWidth = v.getWidth() * v.getScaleX();
         float offset = (mChildMaxWidth - scaledWidth) / 2f;
-        float afterTransCenter = v.getLeft() - Math.abs(v.getTranslationX() * 2) + scaledWidth / 2;
+
+        float scaleLeftToLeft = Math.abs(v.getTranslationX() * 2);
+        if (mIsReverse) {
+            offset = -offset;
+        }
+        if (scaledWidth / mChildStartWidth == 1) {
+            scaleLeftToLeft = Math.abs(v.getTranslationX());
+        }
+
+        float afterTransCenter = v.getLeft() - scaleLeftToLeft + scaledWidth / 2;
         float result = afterTransCenter - offset - recyclerCenter.x;
-        Log.i("JaredTest", "position:" + getPosition(v) + "offset result:" + result);
+        Log.i("JaredTest", "position:" + getPosition(v) + ", result:" + result + ", offset:" + offset);
         return result;
     }
 
