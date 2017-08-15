@@ -112,7 +112,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     }
 
     public void setMaxScale(float maxScale) {
-        if (maxScale < 1.0f){
+        if (maxScale < 1.0f) {
             maxScale = 1.0f;
         }
         mMaxScale = maxScale;
@@ -189,9 +189,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         }
 
         float afterTransCenter = v.getLeft() - scaleLeftToLeft + scaledWidth / 2;
-        float result = afterTransCenter - offset - recyclerCenter.x;
-        Log.i("JaredTest", "position:" + getPosition(v) + ", result:" + result + ", offset:" + offset);
-        return result;
+        return afterTransCenter - offset - recyclerCenter.x;
     }
 
     private float getCenterRelativeRealDistanceOf(View v) {
@@ -291,15 +289,12 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
                 int position = getPosition(child);
 
-                Log.i("JARED", "position:" + position + ", scale:" + scale);
-
                 child.setPivotX(child.getWidth() / 2f);
                 child.setPivotY(child.getHeight() / 2f);
                 child.setScaleX(scale);
                 child.setScaleY(scale);
 
                 float offset = (scale * mChildStartWidth - mChildStartWidth) / 2;
-                Log.i("JaredLuo", "position:" + position + ", offset:" + offset);
                 float targetTrans = -offset;
                 if (targetTrans > 0) {
                     targetTrans = 0;
@@ -346,9 +341,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
 
     private void select(int position) {
         if (mCurrentPosition != position) {
-            if (mOnItemSelectedListener != null) {
-                postSelectionMsg(position);
-            }
+            postSelectionMsg(position);
         }
     }
 
@@ -362,6 +355,10 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             mHandler.removeMessages(msg.what);
             mHandler.sendMessageDelayed(msg, 300);
         }
+    }
+
+    public int getCurrentPosition(){
+        return mCurrentPosition;
     }
 
     public SparseArray<Float> getScaleMap() {
@@ -431,7 +428,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             int nearestOffset;
             if (mTargetPosition != 0) {
                 nearestOffset = (int) (-getCenterRelativeDistanceOf(view));
-                if (nearestOffset == 0) {
+                if (Math.abs(nearestOffset) <= 5) {
                     select(getPosition(view));
                 }
             } else {

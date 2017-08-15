@@ -88,10 +88,7 @@ public abstract class ScrollSelectorAdapter<T, VH extends RecyclerView.ViewHolde
     }
 
     public boolean isCurrentPosition(int position) {
-        float currentScale = mLayoutManager.getScaleMap().get(position, 1f);
-        BigDecimal bd = new BigDecimal(currentScale);
-        currentScale = bd.setScale(1, RoundingMode.HALF_UP).floatValue();
-        return currentScale == getLayoutManager().getMaxScale();
+        return position == mLayoutManager.getCurrentPosition();
     }
 
     public abstract RecyclerView.ViewHolder createViewHolder(View dataView);
