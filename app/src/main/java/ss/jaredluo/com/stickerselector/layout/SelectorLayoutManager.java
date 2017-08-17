@@ -37,6 +37,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
     private float mMarginToCenter = 100;
 
     private OnItemSelectedListener mOnItemSelectedListener;
+    private OnItemScaleListener mOnItemScaleListener;
 
     private Point recyclerCenter = new Point();
     private int mChildMaxWidth;
@@ -294,6 +295,10 @@ public class SelectorLayoutManager extends LinearLayoutManager {
                 child.setScaleX(scale);
                 child.setScaleY(scale);
 
+                if (mOnItemScaleListener != null) {
+                    mOnItemScaleListener.onScale(scale);
+                }
+
                 float offset = (scale * mChildStartWidth - mChildStartWidth) / 2;
                 float targetTrans = -offset;
                 if (targetTrans > 0) {
@@ -357,7 +362,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         }
     }
 
-    public int getCurrentPosition(){
+    public int getCurrentPosition() {
         return mCurrentPosition;
     }
 
@@ -428,6 +433,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
             int nearestOffset;
             if (mTargetPosition != 0) {
                 nearestOffset = (int) (-getCenterRelativeDistanceOf(view));
+                Log.i("Jared", "nearestOffset: "+nearestOffset);
                 if (Math.abs(nearestOffset) <= 5) {
                     select(getPosition(view));
                 }
@@ -447,7 +453,7 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         protected int calculateTimeForScrolling(int dx) {
             int maxScrollRange = getWidth() / 2;
             float dist = Math.min(Math.abs(dx), maxScrollRange);
-            return (int) (dist / maxScrollRange * 200);
+            return (int) (dist / maxScrollRange * 100);
         }
 
         @Nullable
@@ -462,12 +468,20 @@ public class SelectorLayoutManager extends LinearLayoutManager {
         mHandler = new SelectionEventHandler(mOnItemSelectedListener);
     }
 
+    public void setOnItemScaleListener(OnItemScaleListener onItemScaleListener) {
+        this.mOnItemScaleListener = onItemScaleListener;
+    }
+
     public interface OnItemSelectedListener {
         void onSelected(int position);
 
         void onNoSelection();
 
         void onCancelSelection(int position);
+    }
+
+    public interface OnItemScaleListener {
+        void onScale(float scale);
     }
 
     private static class SelectionEventHandler extends Handler {
